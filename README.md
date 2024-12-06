@@ -1,9 +1,9 @@
-## Smart Prosthesis Project by :
+## Smart Prosthesis Project by:
 Avigail Yampolsky, Elisheva Hammer and May Abraham
   
-## Details about the project
+## Details about the project:
  
-## Folder description :
+## Folder description:
 * ESP32: source code for the esp side (firmware).
 * Documentation: wiring diagram + basic operating instructions
 * Unit Tests: tests for individual hardware components (input / output devices)
