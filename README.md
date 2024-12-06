@@ -1,4 +1,5 @@
-## XXXXX Project by :  
+## Smart Prosthesis Project by :
+Avigail Yampolsky, Elisheva Hammer and May Abraham
   
 ## Details about the project
  
