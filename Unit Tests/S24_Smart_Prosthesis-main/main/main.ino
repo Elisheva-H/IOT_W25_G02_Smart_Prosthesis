@@ -12,7 +12,7 @@ Preferences preference;
 Hand* hand;
 
 // -------- globals -------------//
-SemaphoreHandle_t xMutex_state = NULLc:\Users\nivka\Desktop\may_iot\S24_Smart_Prosthesis-main\main\classes\hand_functions.h c:\Users\nivka\Desktop\may_iot\S24_Smart_Prosthesis-main\main\classes\wifi_communication.h c:\Users\nivka\Desktop\may_iot\S24_Smart_Prosthesis-main\main\classes\yaml_to_json_parser.h c:\Users\nivka\Desktop\may_iot\S24_Smart_Prosthesis-main\main\classes\BLE_communication.h c:\Users\nivka\Desktop\may_iot\S24_Smart_Prosthesis-main\main\classes\classes.h c:\Users\nivka\Desktop\may_iot\S24_Smart_Prosthesis-main\main\classes\esp_memory_management.h;
+SemaphoreHandle_t xMutex_state = NULL;
 SemaphoreHandle_t xMutex_payload = NULL;
 volatile bool is_semaphore_being_deleted = false; // Flag to indicate deletion
 Received_command cmd;

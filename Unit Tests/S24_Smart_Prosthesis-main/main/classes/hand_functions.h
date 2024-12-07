@@ -52,8 +52,39 @@ void sensor_1_func(std::map<String, double> params, const uint8_t *payload) {
   }
 }
 
+void sensor_2_func(std::map<String, double> params, const uint8_t *payload) {
+  uint8_t sensor_id = payload[0];
+  uint8_t sensor_value = payload[1];
+  Serial.print("Got sensor id: ");
+  Serial.println(sensor_id);
+  Serial.print("With value: ");
+  Serial.println(sensor_value);
+  Serial.print("speed : ");
+  Serial.println(params["speed"]);
+  Serial.print("PARAM 2 : ");
+  Serial.println(params["param2"]);
+  Serial.print("PARAM 3 : ");
+  Serial.println(params["param3"]);
+
+  DC_motor* finger1_dc = (DC_motor*)hand->get_output_by_name("finger1_dc");
+  DC_motor* finger2_dc = (DC_motor*)hand->get_output_by_name("finger2_dc");
+  if (xSemaphoreTake(xMutex_state, portMAX_DELAY)){
+    int speed = (int)map(sensor_value, 0, 255, 0, 100);
+    if(speed < 50 ){
+      finger1_dc->set_state(FORWARD, speed, 15);//(dir,speed (0-100),threshold)
+      finger2_dc->set_state(FORWARD, speed, 15);//(dir,speed (0-100),threshold)
+    }
+    else {
+      finger1_dc->set_state(BACKWARD, speed-50, 15);//(dir,speed (0-100),threshold)
+      finger2_dc->set_state(BACKWARD, speed-50, 15);//(dir,speed (0-100),threshold)
+    }
+    xSemaphoreGive(xMutex_state);
+  }
+}
+
 std::map<String, FuncPtr> func_map = {
-  {"sensor_1_func", sensor_1_func}
+  {"sensor_1_func", sensor_1_func},
+  {"sensor_2_func", sensor_2_func}
 };
 
 // -------------------------------------------------------------------------------------------------------------------------------- // 
