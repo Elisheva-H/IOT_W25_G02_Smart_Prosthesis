@@ -21,9 +21,66 @@ static uint32_t screenHeight;
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t *disp_draw_buf;
 static lv_disp_drv_t disp_drv;
-
+lv_obj_t *tabview;  // Declare the global tabview variable
 bool is_user = false;
 bool is_tech = false;
+
+void show_password_popup(lv_event_t *e) {
+    // Get the screen object
+    lv_obj_t *screen = lv_scr_act();
+
+    // Create a container for the popup
+    lv_obj_t *popup = lv_obj_create(screen);
+    lv_obj_set_size(popup, 200, 150);
+    lv_obj_set_pos(popup, 50, 50);
+    lv_obj_set_style_bg_color(popup, lv_color_hex(0xFFFFFF), 0);
+    lv_obj_set_style_border_width(popup, 2, 0);
+    lv_obj_set_style_border_color(popup, lv_color_hex(0x000000), 0);
+    
+    // Add a label to the popup
+    lv_obj_t *label = lv_label_create(popup);
+    lv_label_set_text(label, "Enter Password:");
+    lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 10);
+
+    // Add a text area for password input
+    lv_obj_t *textarea = lv_textarea_create(popup);
+    lv_obj_set_size(textarea, 180, 40);
+    lv_obj_align(textarea, LV_ALIGN_CENTER, 0, -20);
+    lv_textarea_set_password_mode(textarea, true);
+
+    // Add an "OK" button
+    lv_obj_t *ok_btn = lv_btn_create(popup);
+    lv_obj_set_size(ok_btn, 80, 30);
+    lv_obj_align(ok_btn, LV_ALIGN_BOTTOM_LEFT, 20, -10);
+    lv_obj_t *ok_label = lv_label_create(ok_btn);
+    lv_label_set_text(ok_label, "OK");
+
+    // Add a "Cancel" button
+    lv_obj_t *cancel_btn = lv_btn_create(popup);
+    lv_obj_set_size(cancel_btn, 80, 30);
+    lv_obj_align(cancel_btn, LV_ALIGN_BOTTOM_RIGHT, -20, -10);
+    lv_obj_t *cancel_label = lv_label_create(cancel_btn);
+    lv_label_set_text(cancel_label, "Cancel");
+
+    // Event callback for the "OK" button
+    lv_obj_add_event_cb(ok_btn, [](lv_event_t *e) {
+        lv_obj_t *textarea = (lv_obj_t *)lv_event_get_user_data(e);
+        const char *password = lv_textarea_get_text(textarea);
+        if (strcmp(password, "1234") == 0) {
+            Serial.println("Correct Password");
+            // Add code to load the "Tech" tab
+        } else {
+            Serial.println("Incorrect Password");
+        }
+    }, LV_EVENT_CLICKED, textarea);
+
+    // Event callback for the "Cancel" button
+    lv_obj_add_event_cb(cancel_btn, [](lv_event_t *e) {
+        lv_obj_t *popup = lv_obj_get_parent(lv_event_get_target(e));
+        lv_obj_del(popup); // Close the popup
+    }, LV_EVENT_CLICKED, NULL);
+}
+
 
 /* Display flushing */
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -61,6 +118,17 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
     {
         data->state = LV_INDEV_STATE_REL;
     }
+}
+
+void create_controls_for_main(lv_obj_t* parent) {
+// Add the "Return" button to each tab
+    lv_obj_t *return_btn = lv_btn_create(parent); // Create button with home_tab as parent
+    lv_obj_set_size(return_btn, 100, 50); // Set button size
+    lv_obj_align(return_btn, LV_ALIGN_BOTTOM_MID, 0, -10); // Align to bottom center
+    lv_obj_t *return_label = lv_label_create(return_btn);
+    lv_label_set_text(return_label, "Return");
+    lv_obj_add_event_cb(return_btn, return_to_main, LV_EVENT_CLICKED, NULL); // Set the event handler
+
 }
 
 void create_controls_for_tab(lv_obj_t* parent, const char* btn1_text, const char* btn2_text) {
@@ -147,7 +215,7 @@ void setup()
     digitalWrite(TFT_BL, HIGH);
     ledcSetup(0, 2000, 8);
     ledcAttachPin(TFT_BL, 0);
-    ledcWrite(0, 255); // Screen brightness can be modified by adjusting this parameter. (0-255)
+    ledcWrite(0, 255); // Screen brightness can be modified by adjusting this parameter.1 (0-255)
     #endif
     gfx->fillScreen(BLACK);
 
@@ -210,7 +278,6 @@ void setupInitialUserScreen() {
     lv_obj_add_event_cb(btnm, [](lv_event_t* e) {
         uint32_t id = lv_btnmatrix_get_selected_btn(lv_event_get_target(e));
         const char* txt = lv_btnmatrix_get_btn_text(lv_event_get_target(e), id);
-
         if (strcmp(txt, "User") == 0) {
             is_user = true;
             is_tech = false;
@@ -235,20 +302,35 @@ void setupMainUI() {
     lv_obj_t* tabview = lv_tabview_create(lv_scr_act(), LV_DIR_TOP, 30);
 
     // Add tabs
-    lv_obj_t* tab1 = lv_tabview_add_tab(tabview, "Tab 1");
-    lv_obj_t* tab2 = lv_tabview_add_tab(tabview, "Tab 2");
-
+    lv_obj_t* home_tab = lv_tabview_add_tab(tabview, "Home");
+    lv_obj_t* stat_tab = lv_tabview_add_tab(tabview, "Stat");
+    lv_obj_t* setup_tab = lv_tabview_add_tab(tabview, "Setup");
+    //            is_user = false;            is_tech = true;
     if (!is_user) {
-        lv_obj_t* tab3 = lv_tabview_add_tab(tabview, "Tab 3");
-        lv_obj_t* tab4 = lv_tabview_add_tab(tabview, "Tab 4");
-        lv_obj_t* tab5 = lv_tabview_add_tab(tabview, "Tab 5");
+      lv_obj_t* tech_tab = lv_tabview_add_tab(tabview, "Tech");
+    }
+    if  (!is_user && !is_tech){
+        lv_obj_t* debug_tab = lv_tabview_add_tab(tabview, "Bug");
     }
 
     // Create controls for both tabs
-    create_controls_for_tab(tab1, "Tab1 Btn1", "Tab1 Btn2");
-    create_controls_for_tab(tab2, "Tab2 Btn1", "Tab2 Btn2");
+    //create_controls_for_tab(home_tab, "home_tab Btn1", "home_tab Btn2");
+    //create_controls_for_tab(tab2, "Tab2 Btn1", "Tab2 Btn2");
+    create_controls_for_main(home_tab);
+    
 }
 
+
+void return_to_main(lv_event_t *e) {
+    // Get the object that triggered the event
+    lv_obj_t *btn = lv_event_get_target(e);
+    
+    // Check if the event is a "clicked" event
+    if(lv_event_get_code(e) == LV_EVENT_CLICKED) {
+        // Assuming 'tabview' is your tabview object
+        lv_tabview_set_act(tabview, 0, LV_ANIM_OFF); // Set the active tab to the first tab (index 0)
+    }
+}
 
 
 void loop()
