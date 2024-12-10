@@ -24,7 +24,77 @@ static lv_disp_drv_t disp_drv;
 lv_obj_t *tabview;  // Declare the global tabview variable
 bool is_user = false;
 bool is_tech = false;
+void show_password_popup(lv_event_t *e) {
+    Serial.println("Creating password popup...");
 
+    lv_obj_t *screen = lv_scr_act();
+
+    // Create the popup container
+    lv_obj_t *popup = lv_obj_create(screen);
+    lv_obj_set_size(popup, 250, 250); // Larger size to fit the keypad
+    lv_obj_center(popup); // Ensure it is centered
+
+    // Add a label
+    lv_obj_t *label = lv_label_create(popup);
+    lv_label_set_text(label, "Enter Password:");
+    lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 10);
+
+    // Add a text area for password input
+    lv_obj_t *textarea = lv_textarea_create(popup);
+    lv_obj_set_size(textarea, 200, 40);
+    lv_obj_align(textarea, LV_ALIGN_TOP_MID, 0, 50);
+    lv_textarea_set_password_mode(textarea, true);
+    lv_textarea_set_one_line(textarea, true);
+
+    // Add a keyboard
+    lv_obj_t *keyboard = lv_keyboard_create(popup);
+    lv_obj_set_size(keyboard, 150, 150);
+    lv_obj_align(keyboard, LV_ALIGN_BOTTOM_MID, 0, -10);
+    lv_keyboard_set_textarea(keyboard, textarea); // Link the keyboard to the text area
+
+    // Set keyboard to numeric mode
+    lv_keyboard_set_mode(keyboard, LV_KEYBOARD_MODE_NUMBER);
+
+    // Add an "OK" button
+    lv_obj_t *ok_btn = lv_btn_create(popup);
+    lv_obj_set_size(ok_btn, 80, 30);
+    lv_obj_align(ok_btn, LV_ALIGN_BOTTOM_LEFT, 20, -170);
+    lv_obj_t *ok_label = lv_label_create(ok_btn);
+    lv_label_set_text(ok_label, "OK");
+
+    // Add a "Cancel" button
+    lv_obj_t *cancel_btn = lv_btn_create(popup);
+    lv_obj_set_size(cancel_btn, 80, 30);
+    lv_obj_align(cancel_btn, LV_ALIGN_BOTTOM_RIGHT, -20, -170);
+    lv_obj_t *cancel_label = lv_label_create(cancel_btn);
+    lv_label_set_text(cancel_label, "Cancel");
+
+    // Event callback for the "OK" button
+    lv_obj_add_event_cb(ok_btn, [](lv_event_t *e) {
+        lv_obj_t *textarea = (lv_obj_t *)lv_event_get_user_data(e);
+        const char *password = lv_textarea_get_text(textarea);
+        if (strcmp(password, "1234") == 0) {
+            Serial.println("Correct Password");
+            is_tech = true;
+            setupMainUI();  // Load the main UI with the "Tech" tab
+        } else {
+            Serial.println("Incorrect Password");
+        }
+        lv_obj_t *popup = lv_obj_get_parent(lv_event_get_target(e));
+        lv_obj_del(popup); // Close the popup
+    }, LV_EVENT_CLICKED, textarea);
+
+    // Event callback for the "Cancel" button
+    lv_obj_add_event_cb(cancel_btn, [](lv_event_t *e) {
+        lv_obj_t *popup = lv_obj_get_parent(lv_event_get_target(e));
+        lv_obj_del(popup); // Close the popup
+    }, LV_EVENT_CLICKED, NULL);
+
+    Serial.println("Password popup with numeric keypad created.");
+}
+
+
+/*
 void show_password_popup(lv_event_t *e) {
     // Get the screen object
     lv_obj_t *screen = lv_scr_act();
@@ -62,15 +132,14 @@ void show_password_popup(lv_event_t *e) {
     lv_obj_t *cancel_label = lv_label_create(cancel_btn);
     lv_label_set_text(cancel_label, "Cancel");
 
-    // Event callback for the "OK" button
+        // Event callback for the "OK" button
     lv_obj_add_event_cb(ok_btn, [](lv_event_t *e) {
         lv_obj_t *textarea = (lv_obj_t *)lv_event_get_user_data(e);
         const char *password = lv_textarea_get_text(textarea);
         if (strcmp(password, "1234") == 0) {
             Serial.println("Correct Password");
-            // Add code to load the "Tech" tab
-        } else {
-            Serial.println("Incorrect Password");
+            is_tech = true; // Now enable tech mode
+            setupMainUI();  // Load the main UI with the "Tech" tab
         }
     }, LV_EVENT_CLICKED, textarea);
 
@@ -80,7 +149,7 @@ void show_password_popup(lv_event_t *e) {
         lv_obj_del(popup); // Close the popup
     }, LV_EVENT_CLICKED, NULL);
 }
-
+*/
 
 /* Display flushing */
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -278,21 +347,21 @@ void setupInitialUserScreen() {
     lv_obj_add_event_cb(btnm, [](lv_event_t* e) {
         uint32_t id = lv_btnmatrix_get_selected_btn(lv_event_get_target(e));
         const char* txt = lv_btnmatrix_get_btn_text(lv_event_get_target(e), id);
+
         if (strcmp(txt, "User") == 0) {
             is_user = true;
             is_tech = false;
             Serial.println("Mode: User");
+            setupMainUI();
         } else if (strcmp(txt, "Tech") == 0) {
-            is_user = false;
-            is_tech = true;
-            Serial.println("Mode: Tech");
+            Serial.println("Requesting password for Tech mode");
+            show_password_popup(e); // Show the password popup here
         } else {
             is_user = false;
             is_tech = false;
             Serial.println("Mode: Debug");
+            setupMainUI();
         }
-        // Load the main UI after setting
-        setupMainUI();
     }, LV_EVENT_VALUE_CHANGED, NULL);
 }
 
