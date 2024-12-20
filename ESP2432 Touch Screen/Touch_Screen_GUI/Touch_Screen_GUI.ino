@@ -24,6 +24,7 @@ static lv_disp_drv_t disp_drv;
 lv_obj_t *tabview;  // Declare the global tabview variable
 bool is_user = false;
 bool is_tech = false;
+
 void show_password_popup(lv_event_t *e) {
     Serial.println("Creating password popup...");
 
@@ -31,6 +32,76 @@ void show_password_popup(lv_event_t *e) {
 
     // Create the popup container
     lv_obj_t *popup = lv_obj_create(screen);
+    lv_obj_set_size(popup, 250, 250); // Adjusted size for the button matrix
+    lv_obj_center(popup);
+    //lv_obj_set_click(popup, true); // Didn't work but looks promising
+
+    // Add a label
+    lv_obj_t *label = lv_label_create(popup);
+    lv_label_set_text(label, "Enter Password:");
+    lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 10);
+
+    // Add a text area for password input
+    lv_obj_t *textarea = lv_textarea_create(popup);
+    lv_obj_set_size(textarea, 200, 40);
+    lv_obj_align(textarea, LV_ALIGN_TOP_MID, 0, 50);
+    lv_textarea_set_password_mode(textarea, true);
+    lv_textarea_set_one_line(textarea, true);
+
+    // Create a custom button matrix
+    static const char *btn_map[] = {
+        "1", "2", "3", "\n",
+        "4", "5", "6", "\n",
+        "7", "8", "9", "\n",
+        "0", "OK", "Cancel", ""
+    };
+
+    lv_obj_t *btn_matrix = lv_btnmatrix_create(popup);
+    lv_btnmatrix_set_map(btn_matrix, btn_map);
+    lv_obj_set_size(btn_matrix, 200, 120); // Adjust size as needed
+    lv_obj_align(btn_matrix, LV_ALIGN_BOTTOM_MID, 0, -10);
+
+    // Event handler for the button matrix
+    lv_obj_add_event_cb(btn_matrix, [](lv_event_t *e) {
+        lv_obj_t *btn_matrix = lv_event_get_target(e);
+        const char *btn_text = lv_btnmatrix_get_btn_text(btn_matrix, lv_btnmatrix_get_selected_btn(btn_matrix));
+
+        if (btn_text) {
+            lv_obj_t *textarea = (lv_obj_t *)lv_event_get_user_data(e);
+
+            if (strcmp(btn_text, "OK") == 0) {
+                const char *password = lv_textarea_get_text(textarea);
+                if (strcmp(password, "1234") == 0) {
+                    Serial.println("Correct Password");
+                    is_tech = true;
+                    setupMainUI();  // Load the main UI with the "Tech" tab
+                } else {
+                    Serial.println("Incorrect Password");
+                    lv_obj_t *popup = lv_obj_get_parent(btn_matrix);
+                    lv_obj_del(popup); // Close the popup
+                }
+                lv_obj_t *popup = lv_obj_get_parent(btn_matrix);
+                lv_obj_del(popup); // Close the popup
+            } else if (strcmp(btn_text, "Cancel") == 0) {
+                lv_obj_t *popup = lv_obj_get_parent(btn_matrix);
+                lv_obj_del(popup); // Close the popup
+            } else {
+                // Append the pressed key to the textarea
+                lv_textarea_add_text(textarea, btn_text);
+            }
+        }
+    }, LV_EVENT_VALUE_CHANGED, textarea);
+
+    Serial.println("Password popup with custom button matrix created.");
+}
+/* old password that actually works
+void show_password_popup(lv_event_t *e) {
+    Serial.println("Creating password popup...");
+
+    lv_obj_t *pass_screen = lv_scr_act();
+
+    // Create the popup container
+    lv_obj_t *popup = lv_obj_create(pass_screen);
     lv_obj_set_size(popup, 250, 250); // Larger size to fit the keypad
     lv_obj_center(popup); // Ensure it is centered
 
@@ -92,6 +163,8 @@ void show_password_popup(lv_event_t *e) {
 
     Serial.println("Password popup with numeric keypad created.");
 }
+
+*/
 
 
 /*
@@ -190,14 +263,13 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 }
 
 void create_controls_for_main(lv_obj_t* parent) {
-// Add the "Return" button to each tab
+// Add the "Return" button to home tab
     lv_obj_t *return_btn = lv_btn_create(parent); // Create button with home_tab as parent
-    lv_obj_set_size(return_btn, 100, 50); // Set button size
-    lv_obj_align(return_btn, LV_ALIGN_BOTTOM_MID, 0, -10); // Align to bottom center
+    lv_obj_set_size(return_btn, 70, 50); // Set button size
+    lv_obj_align(return_btn, LV_ALIGN_BOTTOM_LEFT, -10, 0); // Align to bottom left
     lv_obj_t *return_label = lv_label_create(return_btn);
     lv_label_set_text(return_label, "Return");
     lv_obj_add_event_cb(return_btn, return_to_main, LV_EVENT_CLICKED, NULL); // Set the event handler
-
 }
 
 void create_controls_for_tab(lv_obj_t* parent, const char* btn1_text, const char* btn2_text) {
@@ -328,6 +400,8 @@ void setup()
 }
 
 void setupInitialUserScreen() {
+    is_user = false;
+    is_tech = false;
     lv_obj_t* screen = lv_obj_create(NULL);
     lv_scr_load(screen);
 
@@ -368,7 +442,8 @@ void setupInitialUserScreen() {
 
 
 void setupMainUI() {
-    lv_obj_t* tabview = lv_tabview_create(lv_scr_act(), LV_DIR_TOP, 30);
+    
+    tabview = lv_tabview_create(lv_scr_act(), LV_DIR_TOP, 30);
 
     // Add tabs
     lv_obj_t* home_tab = lv_tabview_add_tab(tabview, "Home");
@@ -390,14 +465,16 @@ void setupMainUI() {
 }
 
 
-void return_to_main(lv_event_t *e) {
+void return_to_main(lv_event_t *e) {    
     // Get the object that triggered the event
-    lv_obj_t *btn = lv_event_get_target(e);
-    
+    lv_obj_t *btn = lv_event_get_target(e);    
     // Check if the event is a "clicked" event
     if(lv_event_get_code(e) == LV_EVENT_CLICKED) {
-        // Assuming 'tabview' is your tabview object
-        lv_tabview_set_act(tabview, 0, LV_ANIM_OFF); // Set the active tab to the first tab (index 0)
+      Serial.println("Return Button was pressed");
+      setupInitialUserScreen();
+
+      // Assuming 'tabview' is your tabview object
+      //lv_tabview_set_act(tabview, 1, LV_ANIM_OFF); // Set the active tab to the second tab (index 1)
     }
 }
 
