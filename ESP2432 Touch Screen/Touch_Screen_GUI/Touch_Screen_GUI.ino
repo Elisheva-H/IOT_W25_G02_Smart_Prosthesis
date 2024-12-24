@@ -25,24 +25,24 @@ lv_obj_t *tabview;  // Declare the global tabview variable
 bool is_user = false;
 bool is_tech = false;
 
-void show_password_popup(lv_event_t *e) {
-    Serial.println("Creating password popup...");
+lv_obj_t *initial_user_screen = NULL; //
 
-    lv_obj_t *screen = lv_scr_act();
 
-    // Create the popup container
-    lv_obj_t *popup = lv_obj_create(screen);
-    lv_obj_set_size(popup, 250, 250); // Adjusted size for the button matrix
-    lv_obj_center(popup);
-    //lv_obj_set_click(popup, true); // Didn't work but looks promising
+
+void show_password_screen(lv_event_t *e) {
+    Serial.println("Creating password screen...");
+
+    // Create a new screen
+    lv_obj_t *password_screen = lv_obj_create(NULL); // NULL creates a new screen
+    lv_obj_set_style_bg_color(password_screen, lv_color_black(), 0); // Optional: Set background color
 
     // Add a label
-    lv_obj_t *label = lv_label_create(popup);
+    lv_obj_t *label = lv_label_create(password_screen);
     lv_label_set_text(label, "Enter Password:");
     lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 10);
 
     // Add a text area for password input
-    lv_obj_t *textarea = lv_textarea_create(popup);
+    lv_obj_t *textarea = lv_textarea_create(password_screen);
     lv_obj_set_size(textarea, 200, 40);
     lv_obj_align(textarea, LV_ALIGN_TOP_MID, 0, 50);
     lv_textarea_set_password_mode(textarea, true);
@@ -56,7 +56,7 @@ void show_password_popup(lv_event_t *e) {
         "0", "OK", "Cancel", ""
     };
 
-    lv_obj_t *btn_matrix = lv_btnmatrix_create(popup);
+    lv_obj_t *btn_matrix = lv_btnmatrix_create(password_screen);
     lv_btnmatrix_set_map(btn_matrix, btn_map);
     lv_obj_set_size(btn_matrix, 200, 120); // Adjust size as needed
     lv_obj_align(btn_matrix, LV_ALIGN_BOTTOM_MID, 0, -10);
@@ -74,17 +74,13 @@ void show_password_popup(lv_event_t *e) {
                 if (strcmp(password, "1234") == 0) {
                     Serial.println("Correct Password");
                     is_tech = true;
-                    setupMainUI();  // Load the main UI with the "Tech" tab
+                    setupMainUI(); // Load the main UI with the "Tech" tab
                 } else {
                     Serial.println("Incorrect Password");
-                    lv_obj_t *popup = lv_obj_get_parent(btn_matrix);
-                    lv_obj_del(popup); // Close the popup
-                }
-                lv_obj_t *popup = lv_obj_get_parent(btn_matrix);
-                lv_obj_del(popup); // Close the popup
+                    lv_scr_load(initial_user_screen); // Return to the main screen
+                }               
             } else if (strcmp(btn_text, "Cancel") == 0) {
-                lv_obj_t *popup = lv_obj_get_parent(btn_matrix);
-                lv_obj_del(popup); // Close the popup
+                lv_scr_load(initial_user_screen); // Return to the main screen
             } else {
                 // Append the pressed key to the textarea
                 lv_textarea_add_text(textarea, btn_text);
@@ -92,137 +88,11 @@ void show_password_popup(lv_event_t *e) {
         }
     }, LV_EVENT_VALUE_CHANGED, textarea);
 
-    Serial.println("Password popup with custom button matrix created.");
+    // Load the new screen
+    lv_scr_load(password_screen);
+
+    Serial.println("Password screen created.");
 }
-/* old password that actually works
-void show_password_popup(lv_event_t *e) {
-    Serial.println("Creating password popup...");
-
-    lv_obj_t *pass_screen = lv_scr_act();
-
-    // Create the popup container
-    lv_obj_t *popup = lv_obj_create(pass_screen);
-    lv_obj_set_size(popup, 250, 250); // Larger size to fit the keypad
-    lv_obj_center(popup); // Ensure it is centered
-
-    // Add a label
-    lv_obj_t *label = lv_label_create(popup);
-    lv_label_set_text(label, "Enter Password:");
-    lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 10);
-
-    // Add a text area for password input
-    lv_obj_t *textarea = lv_textarea_create(popup);
-    lv_obj_set_size(textarea, 200, 40);
-    lv_obj_align(textarea, LV_ALIGN_TOP_MID, 0, 50);
-    lv_textarea_set_password_mode(textarea, true);
-    lv_textarea_set_one_line(textarea, true);
-
-    // Add a keyboard
-    lv_obj_t *keyboard = lv_keyboard_create(popup);
-    lv_obj_set_size(keyboard, 150, 150);
-    lv_obj_align(keyboard, LV_ALIGN_BOTTOM_MID, 0, -10);
-    lv_keyboard_set_textarea(keyboard, textarea); // Link the keyboard to the text area
-
-    // Set keyboard to numeric mode
-    lv_keyboard_set_mode(keyboard, LV_KEYBOARD_MODE_NUMBER);
-
-    // Add an "OK" button
-    lv_obj_t *ok_btn = lv_btn_create(popup);
-    lv_obj_set_size(ok_btn, 80, 30);
-    lv_obj_align(ok_btn, LV_ALIGN_BOTTOM_LEFT, 20, -170);
-    lv_obj_t *ok_label = lv_label_create(ok_btn);
-    lv_label_set_text(ok_label, "OK");
-
-    // Add a "Cancel" button
-    lv_obj_t *cancel_btn = lv_btn_create(popup);
-    lv_obj_set_size(cancel_btn, 80, 30);
-    lv_obj_align(cancel_btn, LV_ALIGN_BOTTOM_RIGHT, -20, -170);
-    lv_obj_t *cancel_label = lv_label_create(cancel_btn);
-    lv_label_set_text(cancel_label, "Cancel");
-
-    // Event callback for the "OK" button
-    lv_obj_add_event_cb(ok_btn, [](lv_event_t *e) {
-        lv_obj_t *textarea = (lv_obj_t *)lv_event_get_user_data(e);
-        const char *password = lv_textarea_get_text(textarea);
-        if (strcmp(password, "1234") == 0) {
-            Serial.println("Correct Password");
-            is_tech = true;
-            setupMainUI();  // Load the main UI with the "Tech" tab
-        } else {
-            Serial.println("Incorrect Password");
-        }
-        lv_obj_t *popup = lv_obj_get_parent(lv_event_get_target(e));
-        lv_obj_del(popup); // Close the popup
-    }, LV_EVENT_CLICKED, textarea);
-
-    // Event callback for the "Cancel" button
-    lv_obj_add_event_cb(cancel_btn, [](lv_event_t *e) {
-        lv_obj_t *popup = lv_obj_get_parent(lv_event_get_target(e));
-        lv_obj_del(popup); // Close the popup
-    }, LV_EVENT_CLICKED, NULL);
-
-    Serial.println("Password popup with numeric keypad created.");
-}
-
-*/
-
-
-/*
-void show_password_popup(lv_event_t *e) {
-    // Get the screen object
-    lv_obj_t *screen = lv_scr_act();
-
-    // Create a container for the popup
-    lv_obj_t *popup = lv_obj_create(screen);
-    lv_obj_set_size(popup, 200, 150);
-    lv_obj_set_pos(popup, 50, 50);
-    lv_obj_set_style_bg_color(popup, lv_color_hex(0xFFFFFF), 0);
-    lv_obj_set_style_border_width(popup, 2, 0);
-    lv_obj_set_style_border_color(popup, lv_color_hex(0x000000), 0);
-    
-    // Add a label to the popup
-    lv_obj_t *label = lv_label_create(popup);
-    lv_label_set_text(label, "Enter Password:");
-    lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 10);
-
-    // Add a text area for password input
-    lv_obj_t *textarea = lv_textarea_create(popup);
-    lv_obj_set_size(textarea, 180, 40);
-    lv_obj_align(textarea, LV_ALIGN_CENTER, 0, -20);
-    lv_textarea_set_password_mode(textarea, true);
-
-    // Add an "OK" button
-    lv_obj_t *ok_btn = lv_btn_create(popup);
-    lv_obj_set_size(ok_btn, 80, 30);
-    lv_obj_align(ok_btn, LV_ALIGN_BOTTOM_LEFT, 20, -10);
-    lv_obj_t *ok_label = lv_label_create(ok_btn);
-    lv_label_set_text(ok_label, "OK");
-
-    // Add a "Cancel" button
-    lv_obj_t *cancel_btn = lv_btn_create(popup);
-    lv_obj_set_size(cancel_btn, 80, 30);
-    lv_obj_align(cancel_btn, LV_ALIGN_BOTTOM_RIGHT, -20, -10);
-    lv_obj_t *cancel_label = lv_label_create(cancel_btn);
-    lv_label_set_text(cancel_label, "Cancel");
-
-        // Event callback for the "OK" button
-    lv_obj_add_event_cb(ok_btn, [](lv_event_t *e) {
-        lv_obj_t *textarea = (lv_obj_t *)lv_event_get_user_data(e);
-        const char *password = lv_textarea_get_text(textarea);
-        if (strcmp(password, "1234") == 0) {
-            Serial.println("Correct Password");
-            is_tech = true; // Now enable tech mode
-            setupMainUI();  // Load the main UI with the "Tech" tab
-        }
-    }, LV_EVENT_CLICKED, textarea);
-
-    // Event callback for the "Cancel" button
-    lv_obj_add_event_cb(cancel_btn, [](lv_event_t *e) {
-        lv_obj_t *popup = lv_obj_get_parent(lv_event_get_target(e));
-        lv_obj_del(popup); // Close the popup
-    }, LV_EVENT_CLICKED, NULL);
-}
-*/
 
 /* Display flushing */
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -402,18 +272,18 @@ void setup()
 void setupInitialUserScreen() {
     is_user = false;
     is_tech = false;
-    lv_obj_t* screen = lv_obj_create(NULL);
-    lv_scr_load(screen);
+    initial_user_screen = lv_obj_create(NULL);
+    lv_scr_load(initial_user_screen);
 
     // Create a label
-    lv_obj_t* label = lv_label_create(screen);
+    lv_obj_t* label = lv_label_create(initial_user_screen);
     lv_label_set_text(label, "Select Mode:");
     lv_obj_center(label);
 
     // Create a button matrix for user mode selection
     static const char* btnm_map[] = {"User", "Tech", "Debug", ""}; // The last element must be an empty string
 
-    lv_obj_t* btnm = lv_btnmatrix_create(screen);
+    lv_obj_t* btnm = lv_btnmatrix_create(initial_user_screen);
     lv_btnmatrix_set_map(btnm, btnm_map);
     lv_btnmatrix_set_one_checked(btnm, true); // Only one button can be checked at a time
     lv_obj_align(btnm, LV_ALIGN_CENTER, 0, 50); // Position below the label
@@ -429,7 +299,8 @@ void setupInitialUserScreen() {
             setupMainUI();
         } else if (strcmp(txt, "Tech") == 0) {
             Serial.println("Requesting password for Tech mode");
-            show_password_popup(e); // Show the password popup here
+            //show_password_popup(e); // Show the password popup here
+            show_password_screen(e); // Show the password screen here
         } else {
             is_user = false;
             is_tech = false;
