@@ -342,7 +342,7 @@ void return_to_main(lv_event_t *e) {
     // Check if the event is a "clicked" event
     if(lv_event_get_code(e) == LV_EVENT_CLICKED) {
       Serial.println("Return Button was pressed");
-      setupInitialUserScreen();
+      lv_scr_load(initial_user_screen); // Return to the main screen
 
       // Assuming 'tabview' is your tabview object
       //lv_tabview_set_act(tabview, 1, LV_ANIM_OFF); // Set the active tab to the second tab (index 1)
