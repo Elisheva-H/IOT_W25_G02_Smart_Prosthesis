@@ -4,6 +4,7 @@
  ******************************************************************************/
 #include <lvgl.h>
 #include <Arduino_GFX_Library.h>
+#include "BLE_client_com.h"
 
 #define TFT_BL 27
 #define GFX_BL DF_GFX_BL // default backlight pin
@@ -14,6 +15,7 @@ Arduino_GFX *gfx = new Arduino_ST7789(bus, -1 /* RST */, 3 /* rotation */, true 
 
 /* Touch include */
 #include "touch.h"
+#define STACK_SIZE 2048
 
 /* Change to your screen resolution */
 static uint32_t screenWidth;
@@ -217,6 +219,8 @@ void create_controls_for_tab(lv_obj_t* parent, const char* btn1_text, const char
 void setup()
 {
     Serial.begin(115200);
+    delay(1000);
+
     Serial.println("LVGL Tabview Demo");
 
     // Init Display
@@ -265,7 +269,8 @@ void setup()
 
     // Initial setup screen for setting is_user
     setupInitialUserScreen();
-
+    Start_BLE_client();
+    xTaskCreate(BLE_loop,"Initialize", STACK_SIZE, nullptr, 2, nullptr);
     Serial.println("Setup done");
 }
 
