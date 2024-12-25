@@ -32,6 +32,7 @@ class MyServerCallbacks : public BLEServerCallbacks {
 
 class MyCallbacks : public BLECharacteristicCallbacks {
     void onWrite(BLECharacteristic *pCharacteristic) override {
+        Serial.println("Entered to onWrite func");
         std::string value = pCharacteristic->getValue();
         if (value.length() > 0) {
             Serial.println("Received request from client:");
