@@ -6,8 +6,6 @@
 #define SERVICE_UUID        "6c09a8a9-be78-4596-9557-3c4bb4965058"
 #define CHARACTERISTIC_UUID "6c09a8a9-be78-4596-9558-3c4bb4965058"
 
-std::string value;
-
 /*
     Based on Neil Kolban example for IDF: https://github.com/nkolban/esp32-snippets/blob/master/cpp_utils/tests/BLE%20Tests/SampleServer.cpp
     Ported to Arduino ESP32 by Evandro Copercini
@@ -44,10 +42,10 @@ class MyCallbacks : public BLECharacteristicCallbacks {
             // Respond based on the request
             if (value == "Option1") {
                 pCharacteristic->setValue("Server recived Option1 from you");
-            } else if (value == "status") {
+            } else if (value == "No") {
                 pCharacteristic->setValue("Server is running!");
             } else {
-                pCharacteristic->setValue("Unknown request");
+                pCharacteristic->setValue("Unknown request (HaHa I know it was YES)");
             }
         }
     }
@@ -56,10 +54,10 @@ class MyCallbacks : public BLECharacteristicCallbacks {
 
 void setup() {
   Serial.begin(115200);
-  delay(1000);
+  delay(1500);
   Serial.println("Starting BLE work!");
 
-  BLEDevice::init("Long name works now");
+  BLEDevice::init("Smart Prosthesis");
   BLEServer *pServer = BLEDevice::createServer();
   BLEService *pService = pServer->createService(SERVICE_UUID);
   BLECharacteristic *pCharacteristic = pService->createCharacteristic(
@@ -69,10 +67,10 @@ void setup() {
                                        );
 
   pCharacteristic->setValue("Hello Avigail");
-  pServer->setCallbacks(new MyServerCallbacks());
+  //pServer->setCallbacks(new MyServerCallbacks());
 
   pService->start();
-  // BLEAdvertising *pAdvertising = pServer->getAdvertising();  // this still is working for backward compatibility
+  //BLEAdvertising *pAdvertising = pServer->getAdvertising();  // this still is working for backward compatibility
   BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(SERVICE_UUID);
   pAdvertising->setScanResponse(true);
