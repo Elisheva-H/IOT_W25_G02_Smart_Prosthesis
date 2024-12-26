@@ -6,16 +6,8 @@
 #define SERVICE_UUID        "6c09a8a9-be78-4596-9557-3c4bb4965058"
 #define CHARACTERISTIC_UUID "6c09a8a9-be78-4596-9558-3c4bb4965058"
 
-/*
-    Based on Neil Kolban example for IDF: https://github.com/nkolban/esp32-snippets/blob/master/cpp_utils/tests/BLE%20Tests/SampleServer.cpp
-    Ported to Arduino ESP32 by Evandro Copercini
-    updates by chegewara
-*/
 
-
-// See the following for generating UUIDs:
-// https://www.uuidgenerator.net/
-
+//Heavilly based on Neil Kolban example for IDF: https://github.com/nkolban/esp32-snippets/blob/master/cpp_utils/tests/BLE%20Tests/SampleServer.cpp, Evandro Copercini and chegewara
 
 // Define the custom callback class
 class MyServerCallbacks : public BLEServerCallbacks {
@@ -42,10 +34,10 @@ class MyCallbacks : public BLECharacteristicCallbacks {
             // Respond based on the request
             if (value == "Option1") {
                 pCharacteristic->setValue("Server recived Option1 from you");
-            } else if (value == "No") {
-                pCharacteristic->setValue("Server is running!");
+            } else if (value == "Option2") {
+                pCharacteristic->setValue("Server recived Option2 from you");
             } else {
-                pCharacteristic->setValue("Unknown request (HaHa I know it was YES)");
+                pCharacteristic->setValue("Unknown request");
             }
         }
     }
