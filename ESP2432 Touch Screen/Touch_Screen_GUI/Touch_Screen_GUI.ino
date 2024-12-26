@@ -15,7 +15,7 @@ Arduino_GFX *gfx = new Arduino_ST7789(bus, -1 /* RST */, 3 /* rotation */, true 
 
 /* Touch include */
 #include "touch.h"
-#define STACK_SIZE 2048
+#define STACK_SIZE 4096
 
 /* Change to your screen resolution */
 static uint32_t screenWidth;
