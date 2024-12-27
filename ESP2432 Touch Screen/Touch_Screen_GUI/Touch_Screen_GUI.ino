@@ -219,7 +219,11 @@ void create_controls_for_tab(lv_obj_t* parent, const char* btn1_text, const char
 void setup()
 {
     Serial.begin(115200);
-    delay(1000);
+    delay(1500);
+
+    xTaskCreate(Start_BLE_client,"Initialize", STACK_SIZE, nullptr, 2, nullptr);
+
+    delay(5000);
 
     Serial.println("LVGL Tabview Demo");
 
@@ -246,6 +250,8 @@ void setup()
     #else
     disp_draw_buf = (lv_color_t *)malloc(sizeof(lv_color_t) * screenWidth * screenHeight/2);
     #endif
+    Serial.printf("The malloc size is ");
+    Serial.println(sizeof(lv_color_t) * screenWidth * screenHeight/2);
     if (!disp_draw_buf) {
         Serial.println("LVGL disp_draw_buf allocate failed!");
         return;
@@ -269,8 +275,6 @@ void setup()
 
     // Initial setup screen for setting is_user
     setupInitialUserScreen();
-    Start_BLE_client();
-    xTaskCreate(BLE_loop,"Initialize", STACK_SIZE, nullptr, 2, nullptr);
     Serial.println("Setup done");
 }
 

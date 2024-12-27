@@ -44,14 +44,17 @@ bool connectToServer() {
 
     pClient->setClientCallbacks(new MyClientCallback());
 
-    
+    Serial.println(" - setClientCallbacks");
+     
     // Connect to the remove BLE Server.
     pClient->connect(myDevice);  // if you pass BLEAdvertisedDevice instead of address, it will be recognized type of peer device address (public or private)
     Serial.println(" - Connected to server");
-    pClient->setMTU(517); //set client to request maximum MTU from server (default is 23 otherwise)
-  
+    //pClient->setMTU(517); //set client to request maximum MTU from server (default is 23 otherwise)
+
     // Obtain a reference to the service we are after in the remote BLE server.
     BLERemoteService* pRemoteService = pClient->getService(serviceUUID);
+    Serial.println(" - Got the service");
+
     if (pRemoteService == nullptr) {
       Serial.print("Failed to find our service UUID: ");
       Serial.println(serviceUUID.toString().c_str());
@@ -109,31 +112,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
   } // onResult
 }; // MyAdvertisedDeviceCallbacks
 
-
-void Start_BLE_client(void* param = NULL) {
-  Serial.begin(115200);
-  Serial.println("Starting Arduino BLE Client application...");
-  BLEDevice::init("");
-  if (!BLEDevice::getInitialized()) {
-    Serial.println("Failed to initialize BLE device!");
-    return;
-  }
-  Serial.println("BLE device initialized successfully.");
-
-  Serial.println("Arduino BLE Client application started");
-  // Retrieve a Scanner and set the callback we want to use to be informed when we
-  // have detected a new device.  Specify that we want active scanning and start the
-  // scan to run for 5 seconds.
-  BLEScan* pBLEScan = BLEDevice::getScan();
-  pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
-  pBLEScan->setInterval(1349);
-  pBLEScan->setWindow(449);
-  pBLEScan->setActiveScan(true);
-  pBLEScan->start(5, false);
-  return;
-}
-
-void BLE_loop (void* param = NULL) {
+void BLE_loop () {
   Serial.println("Entered to BLE_loop");
   while (1){
      // If the flag "doConnect" is true then we have scanned for and found the desired
@@ -155,7 +134,7 @@ void BLE_loop (void* param = NULL) {
     }
     doConnect = false;
   }
-
+  
   // If we are connected to a peer BLE Server, update the characteristic each time we are reached
   // with the current time since boot.
   if (connected) {
@@ -169,4 +148,29 @@ void BLE_loop (void* param = NULL) {
   }
   delay(1000); // Delay a second between loops.
   }
+
+}
+
+void Start_BLE_client(void* param = NULL) {
+  Serial.begin(115200);
+  Serial.println("Starting Arduino BLE Client application...");
+  BLEDevice::init("");
+  if (!BLEDevice::getInitialized()) {
+    Serial.println("Failed to initialize BLE device!");
+    return;
+  }
+  Serial.println("BLE device initialized successfully.");
+
+  Serial.println("Arduino BLE Client application started");
+  // Retrieve a Scanner and set the callback we want to use to be informed when we
+  // have detected a new device.  Specify that we want active scanning and start the
+  // scan to run for 5 seconds.
+  BLEScan* pBLEScan = BLEDevice::getScan();
+  pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
+  pBLEScan->setInterval(1349);
+  pBLEScan->setWindow(449);
+  pBLEScan->setActiveScan(true);
+  pBLEScan->start(5, false);
+  BLE_loop();
+  return;
 } // End of setup.
