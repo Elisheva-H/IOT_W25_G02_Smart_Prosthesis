@@ -27,111 +27,122 @@ lv_obj_t *tabview;  // Declare the global tabview variable
 bool is_user = false;
 bool is_tech = false;
 
+char *tech_pass = "1234";
+char *debug_pass = "1111"; 
+
+
 lv_obj_t *initial_user_screen = NULL; //
 
 
 
 void show_password_screen(lv_event_t *e) {
-    Serial.println("Creating password screen...");
 
-    // Create a new screen
-    lv_obj_t *password_screen = lv_obj_create(NULL); // NULL creates a new screen
-    lv_obj_set_style_bg_color(password_screen, lv_color_black(), 0); // Optional: Set background color
+  Serial.println("Creating password screen...");
+  
+  // Create a new screen
+  lv_obj_t *password_screen = lv_obj_create(NULL); // NULL creates a new screen
+  lv_obj_set_style_bg_color(password_screen, lv_color_black(), 0); // Optional: Set background color
 
-    // Add a label
-    lv_obj_t *label = lv_label_create(password_screen);
-    lv_label_set_text(label, "Enter Password:");
-    lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 10);
+  // Add a label
+  lv_obj_t *label = lv_label_create(password_screen);
+  lv_label_set_text(label, "Enter Password:");
+  lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 10);
 
-    // Add a text area for password input
-    lv_obj_t *textarea = lv_textarea_create(password_screen);
-    lv_obj_set_size(textarea, 200, 40);
-    lv_obj_align(textarea, LV_ALIGN_TOP_MID, 0, 50);
-    lv_textarea_set_password_mode(textarea, true);
-    lv_textarea_set_one_line(textarea, true);
+  // Add a text area for password input
+  lv_obj_t *textarea = lv_textarea_create(password_screen);
+  lv_obj_set_size(textarea, 200, 40);
+  lv_obj_align(textarea, LV_ALIGN_TOP_MID, 0, 50);
+  lv_textarea_set_password_mode(textarea, true);
+  lv_textarea_set_one_line(textarea, true);
 
-    // Create a custom button matrix
-    static const char *btn_map[] = {
-        "1", "2", "3", "\n",
-        "4", "5", "6", "\n",
-        "7", "8", "9", "\n",
-        "0", "OK", "Cancel", ""
-    };
+  // Create a custom button matrix
+  static const char *btn_map[] = {
+      "1", "2", "3", "\n",
+      "4", "5", "6", "\n",
+      "7", "8", "9", "\n",
+      "0", "OK", "Cancel", ""
+  };
 
-    lv_obj_t *btn_matrix = lv_btnmatrix_create(password_screen);
-    lv_btnmatrix_set_map(btn_matrix, btn_map);
-    lv_obj_set_size(btn_matrix, 200, 120); // Adjust size as needed
-    lv_obj_align(btn_matrix, LV_ALIGN_BOTTOM_MID, 0, -10);
+  lv_obj_t *btn_matrix = lv_btnmatrix_create(password_screen);
+  lv_btnmatrix_set_map(btn_matrix, btn_map);
+  lv_obj_set_size(btn_matrix, 200, 120); // Adjust size as needed
+  lv_obj_align(btn_matrix, LV_ALIGN_BOTTOM_MID, 0, -10);
 
-    // Event handler for the button matrix
-    lv_obj_add_event_cb(btn_matrix, [](lv_event_t *e) {
-        lv_obj_t *btn_matrix = lv_event_get_target(e);
-        const char *btn_text = lv_btnmatrix_get_btn_text(btn_matrix, lv_btnmatrix_get_selected_btn(btn_matrix));
+  // Event handler for the button matrix
+  lv_obj_add_event_cb(btn_matrix, [](lv_event_t *e) {
+      lv_obj_t *btn_matrix = lv_event_get_target(e);
+      const char *btn_text = lv_btnmatrix_get_btn_text(btn_matrix, lv_btnmatrix_get_selected_btn(btn_matrix));
 
-        if (btn_text) {
-            lv_obj_t *textarea = (lv_obj_t *)lv_event_get_user_data(e);
+      if (btn_text) {
+          lv_obj_t *textarea = (lv_obj_t *)lv_event_get_user_data(e);
 
-            if (strcmp(btn_text, "OK") == 0) {
-                const char *password = lv_textarea_get_text(textarea);
-                if (strcmp(password, "1234") == 0) {
-                    Serial.println("Correct Password");
-                    is_tech = true;
-                    setupMainUI(); // Load the main UI with the "Tech" tab
-                } else {
-                    Serial.println("Incorrect Password");
-                    lv_scr_load(initial_user_screen); // Return to the main screen
-                }               
-            } else if (strcmp(btn_text, "Cancel") == 0) {
-                lv_scr_load(initial_user_screen); // Return to the main screen
-            } else {
-                // Append the pressed key to the textarea
-                lv_textarea_add_text(textarea, btn_text);
-            }
-        }
-    }, LV_EVENT_VALUE_CHANGED, textarea);
+          if (strcmp(btn_text, "OK") == 0) {
+              const char *password = lv_textarea_get_text(textarea);
 
-    // Load the new screen
-    lv_scr_load(password_screen);
+              if (is_tech && strcmp(password, tech_pass) == 0) {
+                Serial.print("Correct Tech Password \nMode: Tech \n");
+                setupMainUI(); // Load the main UI with the "Tech" tab
+              } else if (!is_tech && strcmp(password, debug_pass) == 0) {
+                Serial.printf("Correct Debug Password \nMode: Debug \n");
+                setupMainUI(); // Load the main UI with the "Debug" tab
+              } else {
+                  Serial.println("Incorrect Password:");
+                  Serial.println(password);
+                  is_tech = false;
+                  lv_scr_load(initial_user_screen); // Return to the main screen
+              }                
+          } else if (strcmp(btn_text, "Cancel") == 0) {
+              is_tech = false;
+              lv_scr_load(initial_user_screen); // Return to the main screen
+          } else {
+              // Append the pressed key to the textarea
+              lv_textarea_add_text(textarea, btn_text);
+          }
+      }
+  }, LV_EVENT_VALUE_CHANGED, textarea);
 
-    Serial.println("Password screen created.");
+  // Load the new screen
+  lv_scr_load(password_screen);
+
+  Serial.println("Password screen created.");
 }
 
 /* Display flushing */
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 {
-    uint32_t w = (area->x2 - area->x1 + 1);
-    uint32_t h = (area->y2 - area->y1 + 1);
+  uint32_t w = (area->x2 - area->x1 + 1);
+  uint32_t h = (area->y2 - area->y1 + 1);
 
 #if (LV_COLOR_16_SWAP != 0)
-    gfx->draw16bitBeRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
+  gfx->draw16bitBeRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
 #else
-    gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
+  gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
 #endif
 
-    lv_disp_flush_ready(disp);
+  lv_disp_flush_ready(disp);
 }
 
 /* Read touch points */
 void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 {
-    if (touch_has_signal())
-    {
-        if (touch_touched())
-        {
-            data->state = LV_INDEV_STATE_PR;
-            /*Set the coordinates*/
-            data->point.x = touch_last_x;
-            data->point.y = touch_last_y;
-        }
-        else if (touch_released())
-        {
-            data->state = LV_INDEV_STATE_REL;
-        }
-    }
-    else
-    {
-        data->state = LV_INDEV_STATE_REL;
-    }
+  if (touch_has_signal())
+  {
+      if (touch_touched())
+      {
+          data->state = LV_INDEV_STATE_PR;
+          /*Set the coordinates*/
+          data->point.x = touch_last_x;
+          data->point.y = touch_last_y;
+      }
+      else if (touch_released())
+      {
+          data->state = LV_INDEV_STATE_REL;
+      }
+  }
+  else
+  {
+      data->state = LV_INDEV_STATE_REL;
+  }
 }
 
 void create_controls_for_main(lv_obj_t* parent) {
@@ -302,19 +313,17 @@ void setupInitialUserScreen() {
         const char* txt = lv_btnmatrix_get_btn_text(lv_event_get_target(e), id);
 
         if (strcmp(txt, "User") == 0) {
-            is_user = true;
-            is_tech = false;
-            Serial.println("Mode: User");
-            setupMainUI();
+          is_user = true;
+          Serial.println("Mode: User");
+          setupMainUI();
         } else if (strcmp(txt, "Tech") == 0) {
-            Serial.println("Requesting password for Tech mode");
-            //show_password_popup(e); // Show the password popup here
-            show_password_screen(e); // Show the password screen here
+          is_tech = true;
+          Serial.println("Requesting password for Tech mode");
+          //show_password_popup(e); // Show the password popup here
+          show_password_screen(e); // Show the password screen here
         } else {
-            is_user = false;
-            is_tech = false;
-            Serial.println("Mode: Debug");
-            setupMainUI();
+          Serial.println("Requesting password for Debug mode"); 
+          show_password_screen(e); // Show the password screen here
         }
     }, LV_EVENT_VALUE_CHANGED, NULL);
 }
@@ -322,7 +331,10 @@ void setupInitialUserScreen() {
 
 
 void setupMainUI() {
-    
+
+    lv_obj_t *mainUI_screen = lv_obj_create(NULL); // NULL creates a new screen
+    lv_scr_load(mainUI_screen);
+
     tabview = lv_tabview_create(lv_scr_act(), LV_DIR_TOP, 30);
 
     // Add tabs
@@ -351,6 +363,8 @@ void return_to_main(lv_event_t *e) {
     // Check if the event is a "clicked" event
     if(lv_event_get_code(e) == LV_EVENT_CLICKED) {
       Serial.println("Return Button was pressed");
+      is_tech = false;
+      is_user = false;
       lv_scr_load(initial_user_screen); // Return to the main screen
 
       // Assuming 'tabview' is your tabview object
