@@ -4,7 +4,7 @@
  ******************************************************************************/
 #include <lvgl.h>
 #include <Arduino_GFX_Library.h>
-#include "BLE_client_com.h"
+#include "BLE_shrinked_clinet_com.h"
 
 #define TFT_BL 27
 #define GFX_BL DF_GFX_BL // default backlight pin
@@ -15,7 +15,7 @@ Arduino_GFX *gfx = new Arduino_ST7789(bus, -1 /* RST */, 3 /* rotation */, true 
 
 /* Touch include */
 #include "touch.h"
-#define STACK_SIZE 4096
+#define STACK_SIZE 8192
 
 /* Change to your screen resolution */
 static uint32_t screenWidth;
@@ -232,7 +232,7 @@ void setup()
     Serial.begin(115200);
     delay(1500);
 
-    xTaskCreate(Start_BLE_client,"Initialize", STACK_SIZE, nullptr, 2, nullptr);
+    xTaskCreate(Start_BLE_client_NIMBLE,"Initialize", STACK_SIZE, nullptr, 2, nullptr);
 
     delay(5000);
 
@@ -252,9 +252,13 @@ void setup()
     lv_init();
     touch_init();
 
+
     screenWidth = gfx->width();
     screenHeight = gfx->height();
-
+    Serial.printf("Free heap: %d bytes\n", ESP.getFreeHeap());
+    Serial.printf("Minimum free heap: %d bytes\n", ESP.getMinFreeHeap());
+    Serial.printf("Total heap size: %d bytes\n", ESP.getHeapSize());
+    Serial.printf("Maximum allocatable heap: %d bytes\n", ESP.getMaxAllocHeap());
     // Allocate memory for the drawing buffer
     #ifdef ESP32
     disp_draw_buf = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * screenWidth * screenHeight/2, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
@@ -263,9 +267,10 @@ void setup()
     #endif
     Serial.printf("The malloc size is ");
     Serial.println(sizeof(lv_color_t) * screenWidth * screenHeight/2);
+  
     if (!disp_draw_buf) {
-        Serial.println("LVGL disp_draw_buf allocate failed!");
-        return;
+      Serial.println("LVGL disp_draw_buf allocate failed!");
+      return;
     }
     lv_disp_draw_buf_init(&draw_buf, disp_draw_buf, NULL, screenWidth * screenHeight/2);
 
