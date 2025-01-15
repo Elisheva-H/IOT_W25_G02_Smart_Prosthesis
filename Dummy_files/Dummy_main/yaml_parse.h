@@ -58,7 +58,9 @@ void parseYAML(const String& yamlContent) {
     Serial.println(error.f_str());
     return;
   }
-
+  serializeJson(doc, Serial);
+  Serial.println();
+  
   // Parse file type
   fileType = doc["file_type"].as<String>();
 
