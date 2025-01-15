@@ -370,10 +370,9 @@ void return_to_main(lv_event_t *e) {
       Serial.println("Return Button was pressed");
       is_tech = false;
       is_user = false;
-      
-      pCharacteristic->setValue("server sends: \"Return Button was pressed\" ");
-      pCharacteristic->notify();
-      // Serial.print("Send:");
+      return_BLE();
+
+
       delay(100);
       // if (!confirmationReceived) {
       //   Serial.println("NO");

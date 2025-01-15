@@ -4,7 +4,7 @@
 #include <NimBLEDevice.h>
 #include <string>
 
-NimBLECharacteristic *pCharacteristic;
+static NimBLECharacteristic *pCharacteristic;
 float temperature = 25.0;
 static bool confirmationReceived = false;
 
@@ -28,6 +28,12 @@ class MyCallbacks: public NimBLECharacteristicCallbacks {
         }
     }
 };
+
+void return_BLE(){
+  float special_val = 20.0;
+  pCharacteristic->setValue(special_val);
+  pCharacteristic->notify();
+}
 
 void Start_BLE_server_NIMBLE(void* params) {
     NimBLEDevice::init("ESP32_Temperature_Server");
@@ -56,7 +62,7 @@ void Start_BLE_server_NIMBLE(void* params) {
         //   Serial.println("YES");
         // }
       if (!confirmationReceived) {
-        Serial.println("NO");
+        //Serial.println("NO");
       }
       else {
         Serial.println("YES");
