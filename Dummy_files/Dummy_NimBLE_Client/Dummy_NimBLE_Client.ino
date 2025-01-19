@@ -13,6 +13,8 @@
 static const NimBLEAdvertisedDevice* advDevice;
 static bool                          doConnect  = false;
 static uint32_t                      scanTimeMs = 5000; /** scan time in milliseconds, 0 = scan forever */
+#define SERVICE_UUID        "12345678-1234-5678-1234-56789abcdef0"
+#define CHARACTERISTIC_UUID "12345678-1234-5678-1234-56789abcdef1"
 
 /**  None of these are required as they will be handled by the library with defaults. **
  **                       Remove as you see fit for your needs                        */
@@ -54,16 +56,27 @@ class ClientCallbacks : public NimBLEClientCallbacks {
 /** Define a class to handle the callbacks when scan events are received */
 class ScanCallbacks : public NimBLEScanCallbacks {
     void onResult(const NimBLEAdvertisedDevice* advertisedDevice) override {
-        //Serial.printf("Advertised Device found: %s\n", advertisedDevice->toString().c_str());
-        if (advertisedDevice->isAdvertisingService(NimBLEUUID("6c09a8a9-be78-4596-9557-3c4bb4965058"))) {
-            Serial.printf("Found Smart Prosthesis Service\n");
-            /** stop scan before connecting */
-            NimBLEDevice::getScan()->stop();
-            /** Save the device reference in a global for the client to use*/
-            advDevice = advertisedDevice;
-            /** Ready to connect now */
-            doConnect = true;
+        Serial.printf("Advertised Device found: %s\n", advertisedDevice->toString().c_str());
+        Serial.printf("Address: %s\n", advertisedDevice->getAddress().toString().c_str());
+        if(strcmp(advertisedDevice->getAddress().toString().c_str(), "e0:5a:1b:a2:75:42") == 0 ){
+          Serial.printf("Found Our Service\n");
+          /** stop scan before connecting */
+          NimBLEDevice::getScan()->stop();
+          /** Save the device reference in a global for the client to use*/
+          advDevice = advertisedDevice;
+          /** Ready to connect now */
+          doConnect = true;
         }
+        
+        // if (advertisedDevice->isAdvertisingService(NimBLEUUID(SERVICE_UUID))) {
+        //     Serial.printf("Found Our Service\n");
+        //     /** stop scan before connecting */
+        //     NimBLEDevice::getScan()->stop();
+        //     /** Save the device reference in a global for the client to use*/
+        //     advDevice = advertisedDevice;
+        //     /** Ready to connect now */
+        //     doConnect = true;
+        // }
     }
 
     /** Callback to process the results of the completed scan or restart it */
@@ -76,12 +89,17 @@ class ScanCallbacks : public NimBLEScanCallbacks {
 /** Notification / Indication receiving handler callback */
 void notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify) {
     std::string str  = (isNotify == true) ? "Notification" : "Indication";
-    str             += " from ";
-    str             += pRemoteCharacteristic->getClient()->getPeerAddress().toString();
-    str             += ": Service = " + pRemoteCharacteristic->getRemoteService()->getUUID().toString();
-    str             += ", Characteristic = " + pRemoteCharacteristic->getUUID().toString();
-    str             += ", Value = " + std::string((char*)pData, length);
-    Serial.printf("%s\n", str.c_str());
+    //str             += ": Service = " + pRemoteCharacteristic->getRemoteService()->getUUID().toString();
+    //str             += ", Value = " + std::string((char*)pData, length);
+
+   
+
+    Serial.print("Byte array: ");
+    for (size_t i = 0; i < length; i++) {
+      Serial.print(pData[i], HEX);  // Prints each byte as hexadecimal
+      Serial.print(" ");
+    }
+    Serial.println();
 }
 
 /** Handles the provisioning of clients and connects / interfaces with the server */
@@ -155,10 +173,10 @@ bool connectToServer() {
     NimBLERemoteService*        pSvc = nullptr;
     NimBLERemoteCharacteristic* pChr = nullptr;
     NimBLERemoteDescriptor*     pDsc = nullptr;
-    //Serial.println("got to get service");
-    pSvc = pClient->getService("6c09a8a9-be78-4596-9557-3c4bb4965058");
+
+    pSvc = pClient->getService(SERVICE_UUID);
     if (pSvc) {
-        pChr = pSvc->getCharacteristic("6c09a8a9-be78-4596-9558-3c4bb4965058");
+        pChr = pSvc->getCharacteristic(CHARACTERISTIC_UUID);
     }
 
     if (pChr) {
@@ -167,15 +185,15 @@ bool connectToServer() {
         }
 
         if (pChr->canWrite()) {
-            if (pChr->writeValue("MSG from client touch screen")) {
-                Serial.printf("Wrote new value to: %s\n", pChr->getUUID().toString().c_str());
+            if (pChr->writeValue("Tasty")) {
+                Serial.printf("Wrote new value:\n");
             } else {
                 pClient->disconnect();
                 return false;
             }
 
             if (pChr->canRead()) {
-                Serial.printf("The value of: %s is now: %s\n", pChr->getUUID().toString().c_str(), pChr->readValue().c_str());
+                Serial.printf("The value is now: %s\n", pChr->readValue().c_str());
             }
         }
 
@@ -194,31 +212,30 @@ bool connectToServer() {
     } else {
         Serial.printf("DEAD service not found.\n");
     }
-    /* 
-    pSvc = pClient->getService("BAAD");
+
+    pSvc = pClient->getService(SERVICE_UUID);
     if (pSvc) {
-        pChr = pSvc->getCharacteristic("F00D");
+        pChr = pSvc->getCharacteristic(CHARACTERISTIC_UUID);
         if (pChr) {
             if (pChr->canRead()) {
-                Serial.printf("%s Value: %s\n", pChr->getUUID().toString().c_str(), pChr->readValue().c_str());
+                Serial.printf("Value: %s\n", pChr->readValue().c_str());
             }
 
-            pDsc = pChr->getDescriptor(NimBLEUUID("C01D"));
-            if (pDsc) {
-                Serial.printf("Descriptor: %s  Value: %s\n", pDsc->getUUID().toString().c_str(), pDsc->readValue().c_str());
-            }
+            // pDsc = pChr->getDescriptor(NimBLEUUID("C01D"));
+            // if (pDsc) {
+            //     Serial.printf("Descriptor: %s  Value: %s\n", pDsc->getUUID().toString().c_str(), pDsc->readValue().c_str());
+            // }
 
             if (pChr->canWrite()) {
                 if (pChr->writeValue("No tip!")) {
-                    Serial.printf("Wrote new value to: %s\n", pChr->getUUID().toString().c_str());
+                    Serial.printf("Wrote new value: ");
                 } else {
                     pClient->disconnect();
                     return false;
                 }
 
                 if (pChr->canRead()) {
-                    Serial.printf("The value of: %s is now: %s\n",
-                                  pChr->getUUID().toString().c_str(),
+                    Serial.printf("The value is now: %s\n",
                                   pChr->readValue().c_str());
                 }
             }
@@ -229,7 +246,7 @@ bool connectToServer() {
                     return false;
                 }
             } else if (pChr->canIndicate()) {
-                // Send false as first argument to subscribe to indications instead of notifications //
+                /** Send false as first argument to subscribe to indications instead of notifications */
                 if (!pChr->subscribe(false, notifyCB)) {
                     pClient->disconnect();
                     return false;
@@ -238,38 +255,19 @@ bool connectToServer() {
         }
     } else {
         Serial.printf("BAAD service not found.\n");
-    } */
+    }
 
     Serial.printf("Done with this device!\n");
     return true;
 }
 
-void BLE_LOOP_NIMBLE() {
-    /** Loop here until we find a device we want to connect to */
-
-    while(1){
-      delay(1000);
-      if (doConnect) {
-        doConnect = false;
-        /** Found a device we want to connect to, do it now */
-        if (connectToServer()) {
-          Serial.printf("Success! we should now be getting notifications, scanning for more!\n");
-        } else {
-          Serial.printf("Failed to connect, starting scan\n");
-        }
-
-        //NimBLEDevice::getScan()->start(scanTimeMs, false, true);
-      }
-    }
-    
-}
-
-void Start_BLE_client_NIMBLE(void* param = NULL) {
-    delay(1000);
+void setup() {
+    Serial.begin(115200);
+    Serial.println(1000);
     Serial.printf("Starting NimBLE Client\n");
 
     /** Initialize NimBLE and set the device name */
-    NimBLEDevice::init("Touch Screen-Client");
+    NimBLEDevice::init("NimBLE-Client");
 
     /**
      * Set the IO capabilities of the device, each option will trigger a different pairing method.
@@ -300,16 +298,24 @@ void Start_BLE_client_NIMBLE(void* param = NULL) {
     pScan->setInterval(100);
     pScan->setWindow(100);
 
-    /**
-     * Active scan will gather scan response data from advertisers
-     *  but will use more energy from both devices
-     */
-    pScan->setActiveScan(true);
-
     /** Start scanning for advertisers */
     pScan->start(scanTimeMs);
     Serial.printf("Scanning for peripherals\n");
-    BLE_LOOP_NIMBLE();
 }
 
+void loop() {
+    /** Loop here until we find a device we want to connect to */
+    delay(10);
 
+    if (doConnect) {
+      doConnect = false;
+      /** Found a device we want to connect to, do it now */
+      if (connectToServer()) {
+          Serial.printf("Success! we should now be getting notifications, scanning for more!\n");
+      } else {
+          Serial.printf("Failed to connect, starting scan\n");
+      }
+
+      //NimBLEDevice::getScan()->start(scanTimeMs, false, true);
+  }
+}

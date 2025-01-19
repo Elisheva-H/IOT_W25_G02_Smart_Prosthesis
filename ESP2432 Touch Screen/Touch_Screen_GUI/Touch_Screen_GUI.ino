@@ -4,7 +4,7 @@
  ******************************************************************************/
 #include <lvgl.h>
 #include <Arduino_GFX_Library.h>
-#include "BLE_shrinked_clinet_com.h"
+#include "ble_nimble_server.h"
 
 #define TFT_BL 27
 #define GFX_BL DF_GFX_BL // default backlight pin
@@ -232,7 +232,7 @@ void setup()
     Serial.begin(115200);
     delay(1500);
 
-    xTaskCreate(Start_BLE_client_NIMBLE,"Initialize", STACK_SIZE, nullptr, 2, nullptr);
+    xTaskCreate(Start_BLE_server_NIMBLE,"Initialize", STACK_SIZE, nullptr, 2, nullptr);
 
     delay(5000);
 
@@ -370,6 +370,18 @@ void return_to_main(lv_event_t *e) {
       Serial.println("Return Button was pressed");
       is_tech = false;
       is_user = false;
+      return_BLE();
+
+
+      delay(100);
+
+      if (!confirmationReceived) {
+        //Serial.println("NO");
+      }
+      else {
+        Serial.println("YES");
+      }
+
       lv_scr_load(initial_user_screen); // Return to the main screen
 
       // Assuming 'tabview' is your tabview object
