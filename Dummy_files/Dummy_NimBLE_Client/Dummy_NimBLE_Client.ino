@@ -58,7 +58,8 @@ class ScanCallbacks : public NimBLEScanCallbacks {
     void onResult(const NimBLEAdvertisedDevice* advertisedDevice) override {
         Serial.printf("Advertised Device found: %s\n", advertisedDevice->toString().c_str());
         Serial.printf("Address: %s\n", advertisedDevice->getAddress().toString().c_str());
-        if(strcmp(advertisedDevice->getAddress().toString().c_str(), "e0:5a:1b:a2:75:42") == 0 ){
+        //if(strcmp(advertisedDevice->getAddress().toString().c_str(), "e0:5a:1b:9f:ed:12") == 0 ){/*Avigail*/
+        if(strcmp(advertisedDevice->getAddress().toString().c_str(), "e0:5a:1b:a2:75:42") == 0 ){/*May*/
           Serial.printf("Found Our Service\n");
           /** stop scan before connecting */
           NimBLEDevice::getScan()->stop();
@@ -185,7 +186,7 @@ bool connectToServer() {
         }
 
         if (pChr->canWrite()) {
-            if (pChr->writeValue("Tasty")) {
+            if (pChr->writeValue("canWrite is true")) {
                 Serial.printf("Wrote new value:\n");
             } else {
                 pClient->disconnect();
@@ -210,7 +211,7 @@ bool connectToServer() {
             }
         }
     } else {
-        Serial.printf("DEAD service not found.\n");
+        Serial.printf("service not found.\n");
     }
 
     pSvc = pClient->getService(SERVICE_UUID);
@@ -227,7 +228,7 @@ bool connectToServer() {
             // }
 
             if (pChr->canWrite()) {
-                if (pChr->writeValue("No tip!")) {
+                if (pChr->writeValue("canWrite is true")) {
                     Serial.printf("Wrote new value: ");
                 } else {
                     pClient->disconnect();
@@ -254,7 +255,7 @@ bool connectToServer() {
             }
         }
     } else {
-        Serial.printf("BAAD service not found.\n");
+        Serial.printf("service not found.\n");
     }
 
     Serial.printf("Done with this device!\n");
@@ -305,7 +306,7 @@ void setup() {
 
 void loop() {
     /** Loop here until we find a device we want to connect to */
-    delay(10);
+    delay(100);
 
     if (doConnect) {
       doConnect = false;

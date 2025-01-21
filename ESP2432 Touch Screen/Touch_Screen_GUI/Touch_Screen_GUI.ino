@@ -6,6 +6,7 @@
 #include <Arduino_GFX_Library.h>
 #include "ble_nimble_server.h"
 
+
 #define TFT_BL 27
 #define GFX_BL DF_GFX_BL // default backlight pin
 
@@ -234,7 +235,7 @@ void setup()
 
     xTaskCreate(Start_BLE_server_NIMBLE,"Initialize", STACK_SIZE, nullptr, 2, nullptr);
 
-    delay(5000);
+    delay(500);
 
     Serial.println("LVGL Tabview Demo");
 
