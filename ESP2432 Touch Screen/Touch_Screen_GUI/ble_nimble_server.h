@@ -26,6 +26,7 @@ void return_BLE(){
 
   pCharacteristic->setValue(msg_bytes, len);
   pCharacteristic->notify();
+  free(msg_bytes);
 }
 
 

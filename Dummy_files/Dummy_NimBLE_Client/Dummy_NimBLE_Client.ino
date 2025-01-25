@@ -11,6 +11,7 @@
 #include <NimBLEDevice.h>
 
 #include "shared_com_vars.h"
+#include "requests.h"
 
 static const NimBLEAdvertisedDevice* advDevice;
 static bool                          doConnect  = false;
