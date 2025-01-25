@@ -15,9 +15,19 @@ struct msg_interp{
   int tot_msg_count;
   int msg_length;
   char msg[MAX_MSG_LEN];
-  int cumsum = 0; // Check type
-
+  int checksum; // Check type
 };
+
+
+uint8_t calculateChecksum(const char* data, size_t length) {
+    uint8_t checksum = 0;
+
+    for (size_t i = 0; i < length; ++i) {
+        checksum ^= data[i]; // XOR each byte
+    }
+
+    return checksum;
+}
 
 uint8_t* str_to_byte_msg(int req_type, char* msg_str){
   struct msg_interp msg_instance;
@@ -29,9 +39,11 @@ uint8_t* str_to_byte_msg(int req_type, char* msg_str){
 
   msg_instance.req_type = req_type;
   // CHANGE COUNTERS LATER
-
+  uint8_t checksum_result = calculateChecksum( msg_str, strlen(msg_str) );
+  Serial.printf("check sum %d\n",checksum_result);
   msg_instance.cur_msg_count = 1000;  // Adjust later
   msg_instance.tot_msg_count = 1;  // Adjust later
+  msg_instance.checksum= checksum_result;
   //msg_instance.msg_length = strlen(msg_str) < MAX_MSG_LEN ? strlen(msg_str) : MAX_MSG_LEN;
   msg_instance.msg_length = strlen(msg_str);
 
@@ -67,8 +79,8 @@ void print_byte_array(size_t length, uint8_t* pData){
 }
 
 void print_msg(struct msg_interp* msg){
-  Serial.printf("req_type: %d, cur_msg_count: %d, tot_msg_count: %d, msg_length: %d, msg: %s\n",
-  msg->req_type, msg->cur_msg_count, msg->tot_msg_count, msg->msg_length, msg->msg);
+  Serial.printf("req_type: %d, cur_msg_count: %d, tot_msg_count: %d, msg_length: %d, msg: %s, desired checksum: %d\n",
+  msg->req_type, msg->cur_msg_count, msg->tot_msg_count, msg->msg_length, msg->msg, msg->checksum);
 }
 
 

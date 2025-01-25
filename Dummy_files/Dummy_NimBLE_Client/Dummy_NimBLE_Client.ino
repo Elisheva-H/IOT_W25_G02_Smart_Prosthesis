@@ -63,7 +63,7 @@ class ScanCallbacks : public NimBLEScanCallbacks {
         Serial.printf("Address: %s\n", advertisedDevice->getAddress().toString().c_str());
         
         //if(strcmp(advertisedDevice->getAddress().toString().c_str(), "e0:5a:1b:9f:ed:12") == 0 ){/*Avigail*/
-        if(strcmp(advertisedDevice->getAddress().toString().c_str(), "e0:5a:1b:a2:75:42") == 0 ){/*May*/
+        if (advertisedDevice->isAdvertisingService(NimBLEUUID(SERVICE_UUID))){/*May*/
           Serial.printf("Found Our Service\n");
           /** stop scan before connecting */
           NimBLEDevice::getScan()->stop();
@@ -101,6 +101,9 @@ void notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData,
 
     struct msg_interp* msg = (struct msg_interp*)malloc(sizeof(struct msg_interp));
     *msg = *((struct msg_interp*)pData);
+    char* msg_to_calc=msg->msg;
+    int checksum_result=calculateChecksum(msg_to_calc, (size_t)msg->msg_length);
+    Serial.printf("calculate checksum result is: %d, desired checksum is: %d\n",checksum_result,msg->checksum);
     print_msg(msg);
     
     free(msg);
@@ -176,7 +179,6 @@ bool connectToServer() {
     /** Now we can read/write/subscribe the characteristics of the services we are interested in */
     NimBLERemoteService*        pSvc = nullptr;
     NimBLERemoteCharacteristic* pChr = nullptr;
-    NimBLERemoteDescriptor*     pDsc = nullptr;
 
     pSvc = pClient->getService(SERVICE_UUID);
     if (pSvc) {
