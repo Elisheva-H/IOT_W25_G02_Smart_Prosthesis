@@ -6,9 +6,9 @@
 #define MAX_MSG_LEN 128
 
 enum msg_type{ 
-  read_req, edit_req, func_req, yaml_read
+  read_req, edit_req, func_req, yaml_req,
+  read_ans, edit_ans, func_ans, yaml_ans
 };
-
 struct msg_interp{
   int req_type;
   int cur_msg_count;

@@ -10,7 +10,7 @@
 #include <Arduino.h>
 #include <NimBLEDevice.h>
 
-#include "shared_com_vars.h"
+//#include "shared_com_vars.h"
 #include "requests.h"
 
 static const NimBLEAdvertisedDevice* advDevice;
