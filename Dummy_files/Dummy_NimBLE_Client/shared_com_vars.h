@@ -15,7 +15,7 @@ struct msg_interp{
   int tot_msg_count;
   int msg_length;
   char msg[MAX_MSG_LEN];
-  int checksum;
+  int checksum; // Check type
 };
 
 

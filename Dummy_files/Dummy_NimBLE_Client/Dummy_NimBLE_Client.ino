@@ -10,6 +10,8 @@
 #include <Arduino.h>
 #include <NimBLEDevice.h>
 
+#include "shared_com_vars.h"
+
 static const NimBLEAdvertisedDevice* advDevice;
 static bool                          doConnect  = false;
 static uint32_t                      scanTimeMs = 5000; /** scan time in milliseconds, 0 = scan forever */
@@ -58,8 +60,9 @@ class ScanCallbacks : public NimBLEScanCallbacks {
     void onResult(const NimBLEAdvertisedDevice* advertisedDevice) override {
         Serial.printf("Advertised Device found: %s\n", advertisedDevice->toString().c_str());
         Serial.printf("Address: %s\n", advertisedDevice->getAddress().toString().c_str());
+        
         //if(strcmp(advertisedDevice->getAddress().toString().c_str(), "e0:5a:1b:9f:ed:12") == 0 ){/*Avigail*/
-        if(strcmp(advertisedDevice->getAddress().toString().c_str(), "e0:5a:1b:a2:75:42") == 0 ){/*May*/
+        if (advertisedDevice->isAdvertisingService(NimBLEUUID(SERVICE_UUID))){/*May*/
           Serial.printf("Found Our Service\n");
           /** stop scan before connecting */
           NimBLEDevice::getScan()->stop();
@@ -92,16 +95,18 @@ void notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData,
     std::string str  = (isNotify == true) ? "Notification" : "Indication";
     //str             += ": Service = " + pRemoteCharacteristic->getRemoteService()->getUUID().toString();
     //str             += ", Value = " + std::string((char*)pData, length);
+    
+    print_byte_array(length, pData);
 
-   
-
-    Serial.print("Byte array: ");
-    for (size_t i = 0; i < length; i++) {
-      Serial.print(pData[i], HEX);  // Prints each byte as hexadecimal
-      Serial.print(" ");
-    }
-    Serial.println();
-}
+    struct msg_interp* msg = (struct msg_interp*)malloc(sizeof(struct msg_interp));
+    *msg = *((struct msg_interp*)pData);
+    char* msg_to_calc=msg->msg;
+    int checksum_result=calculateChecksum(msg_to_calc, (size_t)msg->msg_length);
+    Serial.printf("calculate checksum result is: %d, desired checksum is: %d\n",checksum_result,msg->checksum);
+    print_msg(msg);
+    
+    free(msg);
+  }
 
 /** Handles the provisioning of clients and connects / interfaces with the server */
 bool connectToServer() {
@@ -173,7 +178,6 @@ bool connectToServer() {
     /** Now we can read/write/subscribe the characteristics of the services we are interested in */
     NimBLERemoteService*        pSvc = nullptr;
     NimBLERemoteCharacteristic* pChr = nullptr;
-    NimBLERemoteDescriptor*     pDsc = nullptr;
 
     pSvc = pClient->getService(SERVICE_UUID);
     if (pSvc) {
@@ -221,11 +225,6 @@ bool connectToServer() {
             if (pChr->canRead()) {
                 Serial.printf("Value: %s\n", pChr->readValue().c_str());
             }
-
-            // pDsc = pChr->getDescriptor(NimBLEUUID("C01D"));
-            // if (pDsc) {
-            //     Serial.printf("Descriptor: %s  Value: %s\n", pDsc->getUUID().toString().c_str(), pDsc->readValue().c_str());
-            // }
 
             if (pChr->canWrite()) {
                 if (pChr->writeValue("canWrite is true")) {
