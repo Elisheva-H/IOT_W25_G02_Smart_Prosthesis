@@ -16,6 +16,7 @@ struct msg_interp{
   int msg_length;
   char msg[MAX_MSG_LEN];
   int cumsum = 0; // Check type
+
 };
 
 uint8_t* str_to_byte_msg(int req_type, char* msg_str){
@@ -65,11 +66,12 @@ void print_byte_array(size_t length, uint8_t* pData){
   Serial.println();
 }
 
-
 void print_msg(struct msg_interp* msg){
   Serial.printf("req_type: %d, cur_msg_count: %d, tot_msg_count: %d, msg_length: %d, msg: %s\n",
   msg->req_type, msg->cur_msg_count, msg->tot_msg_count, msg->msg_length, msg->msg);
 }
+
+
 
 /////////////////////////////////////////////
 // Simple communication usage example      //
