@@ -6,7 +6,6 @@
 #include <Arduino_GFX_Library.h>
 #include "ble_nimble_server.h"
 
-
 #define TFT_BL 27
 #define GFX_BL DF_GFX_BL // default backlight pin
 

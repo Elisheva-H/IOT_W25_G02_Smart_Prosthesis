@@ -58,14 +58,6 @@ uint8_t* str_to_byte_msg(int req_type, char* msg_str){
 
   // Copy the struct contents to the byte array
   memcpy(byte_msg, &msg_instance, struct_size);
-  
-  Serial.print("Byte array: ");
-    for (size_t i = 0; i < struct_size; i++) {
-      Serial.print(byte_msg[i], HEX);  // Prints each byte as hexadecimal
-      Serial.print(" ");
-    }
-    Serial.println();
-
   return byte_msg;
 }
 
@@ -83,6 +75,7 @@ void print_msg(struct msg_interp* msg){
   Serial.printf("req_type: %d, cur_msg_count: %d, tot_msg_count: %d, msg_length: %d, msg: %s, desired checksum: %d\n",
   msg->req_type, msg->cur_msg_count, msg->tot_msg_count, msg->msg_length, msg->msg, msg->checksum);
 }
+
 
 /////////////////////////////////////////////
 // Simple communication usage example      //
