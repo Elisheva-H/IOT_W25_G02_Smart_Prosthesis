@@ -6,8 +6,8 @@
 #define MAX_MSG_LEN 128
 
 enum msg_type{ 
-  read_req, edit_req, func_req, yaml_req,
-  read_ans, edit_ans, func_ans, yaml_ans
+  read_req, edit_req, func_req, yaml_req, gest_req,
+  read_ans, edit_ans, func_ans, yaml_ans, gest_ans
 };
 struct msg_interp{
   int req_type;
@@ -69,7 +69,7 @@ uint8_t* str_to_byte_msg(int req_type, char* msg_str){
   return byte_msg;
 }
 
-void print_byte_array(size_t length, uint8_t* pData){
+void print_byte_array(size_t length, const uint8_t* pData){
   Serial.print("Byte array: ");
   for (size_t i = 0; i < length; i++) {
     Serial.print(pData[i], HEX);  // Prints each byte as hexadecimal

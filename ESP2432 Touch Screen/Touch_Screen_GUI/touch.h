@@ -106,7 +106,8 @@ void touch(TPoint p, TEvent e)
 }
 #endif
 
-void touch_init(){
+void touch_init()
+{
 #if defined(TOUCH_FT6X36)
   Wire.begin(TOUCH_FT6X36_SDA, TOUCH_FT6X36_SCL);
   ts.begin();

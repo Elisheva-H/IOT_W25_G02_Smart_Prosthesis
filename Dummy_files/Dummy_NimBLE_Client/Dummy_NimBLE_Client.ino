@@ -105,8 +105,17 @@ void notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData,
     int checksum_result=calculateChecksum(msg_to_calc, (size_t)msg->msg_length);
     Serial.printf("calculate checksum result is: %d, desired checksum is: %d\n",checksum_result,msg->checksum);
     print_msg(msg);
-    
-    free(msg);
+    if (msg->req_type==msg_type::gest_req) {
+      uint8_t* msg_bytes = str_to_byte_msg(msg_type::gest_ans,msg->msg);
+      uint16_t len = sizeof(struct msg_interp);
+      print_msg((struct msg_interp*)msg_bytes);
+      //TODO: add function call to use gesture 
+      delay(3000);
+      // the delay mimic function operation to move the hand...........
+      pRemoteCharacteristic->writeValue(msg_bytes,sizeof(struct msg_interp));
+      Serial.println("sent acknowledge");
+    }
+    //free(msg);
   }
 
 /** Handles the provisioning of clients and connects / interfaces with the server */

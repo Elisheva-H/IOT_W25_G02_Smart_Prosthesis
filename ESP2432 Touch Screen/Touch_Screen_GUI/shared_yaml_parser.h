@@ -4,6 +4,8 @@
 #include <ArduinoJson.h>
 #include <YAMLDuino.h>
 
+#define FUNC_TYPE_GESTURE "gesture"
+
 // Communication struct
 struct Communication {
     String name;
@@ -64,12 +66,12 @@ struct Function {
 };
 
 // Global vectors for parsed data
-String fileType;
-std::vector<General> generalEntries;
-std::vector<Communication> communications;
-std::vector<Sensor> sensors;
-std::vector<Motor> motors;
-std::vector<Function> functions;
+static String fileType;
+static std::vector<General> generalEntries;
+static std::vector<Communication> communications;
+static std::vector<Sensor> sensors;
+static std::vector<Motor> motors;
+static std::vector<Function> functions;
 
 void parseYAML(const String& yamlContent) {
   JsonDocument doc; 
@@ -393,8 +395,21 @@ void init_yaml() {
   
   // turn on if you want only to create a string in a yaml file for debuging
   const char* yamlContent = create_default_yaml_string();
-  Serial.printf("\nSensors\n");
+  parseYAML(yamlContent);
   //// in case you want to print the structs use the function below 
   //printAllStructs(sensors, motors, functions);
+}
+
+void init_default_yaml() {
+
+  // // turn on if you want to write a default yaml file on the mcu
+  // const char* yamlContent = create_yaml_on_spiff(config_yaml);
+  
+  // turn on if you want only to create a string in a yaml file for debuging
+  const char* yamlContent = create_default_yaml_string();
+  parseYAML(yamlContent);
+
+  //// in case you want to print the structs use the function below 
+  printAllStructs(sensors, motors, functions);
 }
 
