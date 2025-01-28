@@ -1,7 +1,4 @@
-/*******************************************************************************
- * LVGL Widgets
- * This is a widgets demo for LVGL - Light and Versatile Graphics Library
- ******************************************************************************/
+
 
 #include <lvgl.h>
 #include <atomic>
@@ -9,6 +6,8 @@
 #include <Arduino_GFX_Library.h>
 #include "ble_nimble_server.h"
 
+#include "requests.h"
+#include "shared_yaml_parser.h"
 
 #define TFT_BL 27
 #define GFX_BL DF_GFX_BL // default backlight pin
@@ -61,6 +60,7 @@ const char* empty_string = "";
 
 char *tech_pass = "1234";
 char *debug_pass = "1111"; 
+
 
 
 lv_obj_t *initial_user_screen = NULL; //
@@ -477,6 +477,7 @@ void setup()
     touch_init();
 
 
+
     screenWidth = gfx->width();
     screenHeight = gfx->height();
     //Serial.printf("Free heap: %d bytes\n", ESP.getFreeHeap());
@@ -712,6 +713,8 @@ void setupMainUI() {
     //create_controls_for_tab(home_tab, "home_tab Btn1", "home_tab Btn2");
     //create_controls_for_tab(tab2, "Tab2 Btn1", "Tab2 Btn2");
     create_controls_for_main(home_tab);
+
+
     
 }
 
@@ -744,8 +747,16 @@ void return_to_main(lv_event_t *e) {
 }
 
 
-void loop()
-{
-    lv_timer_handler(); /* let the GUI do its work */
-    delay(5);
+void loop(){
+  lv_timer_handler(); /* let the GUI do its work */
+  delay(5);
+  // Flags for YAML parsing
+  if (is_yml_sensors_ready){
+    Serial.printf("sensors are ready\n");
+    parseYAML(SENSORS_FIELD, (char*)*pointer_to_sensor_buff);
+    is_yml_sensors_ready = false;
+    free(*pointer_to_sensor_buff);
+  }
+
 }
+

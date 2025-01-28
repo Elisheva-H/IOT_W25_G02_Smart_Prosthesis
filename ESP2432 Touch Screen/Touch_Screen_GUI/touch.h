@@ -1,23 +1,12 @@
-
+#ifndef TOUCH_H
+#define TOUCH_H
 /*******************************************************************************
  * Touch libraries:
- * FT6X36: https://github.com/strange-v/FT6X36.git
+
  * GT911: https://github.com/TAMCTec/gt911-arduino.git
- * XPT2046: https://github.com/PaulStoffregen/XPT2046_Touchscreen.git
+
  ******************************************************************************/
-//
-///* uncomment for FT6X36 */
-// #define TOUCH_FT6X36
-// #define TOUCH_FT6X36_SCL 32
-// #define TOUCH_FT6X36_SDA 33
-// #define TOUCH_FT6X36_INT 21
-//// #define TOUCH_GT911_RST  25
-// #define TOUCH_FT6X36_ROTATION ROTATION_NORMAL
-// #define TOUCH_SWAP_XY
-// #define TOUCH_MAP_X1 320
-// #define TOUCH_MAP_X2 0
-// #define TOUCH_MAP_Y1 0
-// #define TOUCH_MAP_Y2 480
+
 
 /* uncomment for GT911 */
  #define TOUCH_GT911
@@ -31,18 +20,7 @@
  #define TOUCH_MAP_Y1 240
  #define TOUCH_MAP_Y2 0
 
-/* uncomment for XPT2046 */
-// #define TOUCH_XPT2046
-// #define TOUCH_XPT2046_SCK 14
-// #define TOUCH_XPT2046_MISO 12
-// #define TOUCH_XPT2046_MOSI 13
-// #define TOUCH_XPT2046_CS 33
-// #define TOUCH_XPT2046_INT 36
-// #define TOUCH_XPT2046_ROTATION 3
-// #define TOUCH_MAP_X1 4000
-// #define TOUCH_MAP_X2 100
-// #define TOUCH_MAP_Y1 100
-// #define TOUCH_MAP_Y2 4000
+
 
 int touch_last_x = 0, touch_last_y = 0;
 
@@ -221,3 +199,5 @@ bool touch_released()
   return false;
 #endif
 }
+
+#endif //TOUCH_H

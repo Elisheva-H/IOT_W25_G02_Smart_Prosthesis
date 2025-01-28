@@ -1,3 +1,6 @@
+#ifndef REQUESTS_H
+#define REQUESTS_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,3 +21,4 @@ void send_YAML(){
   }
 }
 
+#endif //REQUESTS_H

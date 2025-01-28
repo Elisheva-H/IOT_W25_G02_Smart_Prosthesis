@@ -1,10 +1,22 @@
+#ifndef SHARED_YAMEL_PARSER_H
+#define SHARED_YAMEL_PARSER_H
+
+#include <Arduino.h>
 #include <vector>
 #include <map>
-#include <Arduino.h>
 #include <ArduinoJson.h>
 #include <YAMLDuino.h>
+#include "shared_com_vars.h"
+#include "ble_nimble_server.h"
 
 #define FUNC_TYPE_GESTURE "gesture"
+
+// // yaml pointers 
+static uint8_t* motors_yaml_buffer;
+static uint8_t* sensors_yaml_buffer;
+static uint8_t* funcs_yaml_buffer;
+static uint8_t* general_yaml_buffer;
+
 
 // Communication struct
 struct Communication {
@@ -73,100 +85,7 @@ static std::vector<Sensor> sensors;
 static std::vector<Motor> motors;
 static std::vector<Function> functions;
 
-void parseYAML(const String& yamlContent) {
-  JsonDocument doc; 
-  // Parse the YAML string into a JsonDocument
-  DeserializationError error = deserializeYml(doc, yamlContent.c_str());
-  if ( error ) {
-    Serial.print("Failed to parse YAML: ");
-    Serial.println(error.f_str());
-    return;
-  }
-  serializeJson(doc, Serial);
-  Serial.println();
-  // Parse File Type
-  fileType = doc["file_type"].as<String>();
 
-  // Parse General Entries
-  JsonArray generalArray = doc["general"];
-  for (JsonObject entry : generalArray) {
-      General gen;
-      gen.name = entry["name"].as<String>();
-      gen.code = entry["code"].as<int>();
-      generalEntries.push_back(gen);
-  }
-
-  // Parse Communications
-  JsonArray commArray = doc["communications"];
-  for (JsonObject entry : commArray) {
-      Communication comm;
-      comm.name = entry["name"].as<String>();
-      comm.status = entry["status"].as<String>();
-      comm.ssid = entry["ssid"].as<String>();
-      comm.password = entry["password"].as<String>();
-      comm.mac = entry["mac"].as<String>();
-      comm.serviceUUID = entry["SERVICE1_UUID"].as<String>();
-      comm.characteristicUUID = entry["CHARACTERISTIC1_UUID"].as<String>();
-      communications.push_back(comm);
-  }
-
-  // Parse Sensors
-  JsonArray sensorArray = doc["sensors"];
-  for (JsonObject entry : sensorArray) {
-      Sensor sensor;
-      Serial.printf("\n%s, %s, %s\n" ,entry["name"].as<String>(),entry["status"].as<String>(),entry["type"].as<String>());
-      sensor.name = entry["name"].as<String>();
-      sensor.status = entry["status"].as<String>();
-      sensor.type = entry["type"].as<String>();
-
-      JsonObject funcObj = entry["function"];
-      sensor.function.name = funcObj["name"].as<String>();
-
-      JsonObject params = funcObj["parameters"];
-      for (JsonPair param : params) {
-          Parameter paramData;
-          JsonArray paramArray = param.value().as<JsonArray>();
-          paramData.current_val = paramArray[0];
-          paramData.min = paramArray[1];
-          paramData.max = paramArray[2];
-          paramData.modify_permission = paramArray[3];
-          sensor.function.parameters[param.key().c_str()] = paramData;
-      }
-      sensors.push_back(sensor);
-  }
-
-  // Parse Motors
-  JsonArray motorArray = doc["motors"];
-  for (JsonObject entry : motorArray) {
-      Motor motor;
-      motor.name = entry["name"].as<String>();
-      motor.type = entry["type"].as<String>();
-
-      JsonArray pinsArray = entry["pins"];
-      for (JsonObject pin : pinsArray) {
-          MotorPin motorPin;
-          motorPin.type = pin["type"].as<String>();
-          motorPin.pin_number = pin["pin_number"].as<int>();
-          motor.pins.push_back(motorPin);
-      }
-
-      JsonArray threshold = entry["safety_threshold"].as<JsonArray>();
-      motor.safety_threshold.current_val = threshold[0];
-      motor.safety_threshold.min = threshold[1];
-      motor.safety_threshold.max = threshold[2];
-      motor.safety_threshold.modify_permission = threshold[3];
-      motors.push_back(motor);
-  }
-
-  // Parse Actions
-  JsonArray actionArray = doc["functions"];
-  for (JsonObject entry : actionArray) {
-      Function function;
-      function.name = entry["name"].as<String>();
-      function.protocol_type = entry["protocol_type"].as<String>();
-      functions.push_back(function);
-  }
-}
 
 const char* create_default_yaml_string(){
   const char* yamlContent = R"(
@@ -286,6 +205,241 @@ functions:
   return yamlContent;
 }
 
+void splitYaml(const char* yaml, char **general, char **sensors, char **motors, char **functions) {
+    Serial.println("recived yamel buffer, splitting");
+    const char *start_general = strstr(yaml, "general:");
+    const char *start_sensors = strstr(yaml, "sensors:");
+    const char *start_motors = strstr(yaml, "motors:");
+    const char *start_functions = strstr(yaml, "functions:");
+
+    // Find the end of each section by locating the next section or end of string
+    const char *end_general = start_sensors ? strstr(start_sensors, "sensors:") : NULL;
+    const char *end_sensors = start_motors ? strstr(start_motors, "motors:") : NULL;
+    const char *end_motors = start_functions ? strstr(start_functions, "functions:") : NULL;
+    const char *end_functions = NULL; // Functions section ends at the end of the string
+
+    // Copy each section into the respective output strings
+    if (start_general) {
+        size_t len = (end_general ? end_general : yaml + strlen(yaml)) - start_general;
+        *general = (char*) malloc((len+1)*sizeof(char));
+        strncpy(*general, start_general, len);
+        (*general)[len] = '\0';
+    }
+    if (start_sensors) {
+        size_t len = (end_sensors ? end_sensors : yaml + strlen(yaml)) - start_sensors;
+        *sensors = (char*) malloc((len+1)*sizeof(char));
+        strncpy(*sensors, start_sensors, len);
+        (*sensors)[len] = '\0';
+    }
+    if (start_motors) {
+        size_t len = (end_motors ? end_motors : yaml + strlen(yaml)) - start_motors;
+        *motors = (char*) malloc((len+1)*sizeof(char));
+        strncpy(*motors, start_motors, len);
+        (*motors)[len] = '\0';
+    }
+    if (start_functions) {
+        size_t len = (end_functions ? end_functions : yaml + strlen(yaml)) - start_functions;
+        *functions = (char*) malloc((len+1)*sizeof(char));
+        strncpy(*functions, start_functions, len);
+        (*functions)[len] = '\0';
+    }
+  Serial.println("yaml splited. ready for parsing");
+}
+
+void parseYAML(const int field_type, const char * yamlContent) {
+  Serial.printf("\n#3:  %s\n",yamlContent);
+  JsonDocument doc;
+  Serial.println("Before DeserializationError");
+  
+  DeserializationError error = deserializeYml(doc, yamlContent);
+  if ( error ) {
+    Serial.print("Failed to parse YAML: ");
+    Serial.println(error.f_str());
+    return;
+  }
+  Serial.println("Before parsing general");
+  // Parse General Entries
+  switch (field_type) {
+    case GENERAL_FIELD: {
+        // Parse General
+        JsonArray generalArray = doc["general"];
+        for (JsonObject entry : generalArray) {
+            General gen;
+            gen.name = entry["name"].as<String>();
+            gen.code = entry["code"].as<int>();
+            generalEntries.push_back(gen);
+        }
+        break;
+    }
+    case SENSORS_FIELD: {
+        // Parse Sensors
+        Serial.println("Before sensorArray");
+        JsonArray sensorArray = doc["sensors"];
+        Serial.println("Before entry");
+        for (JsonObject entry : sensorArray) {
+            Sensor sensor;
+            Serial.println("parsing sensors");
+            Serial.printf("\n%s, %s, %s\n", entry["name"].as<String>(), entry["status"].as<String>(), entry["type"].as<String>());
+            sensor.name = entry["name"].as<String>();
+            sensor.status = entry["status"].as<String>();
+            sensor.type = entry["type"].as<String>();
+
+            JsonObject funcObj = entry["function"];
+            sensor.function.name = funcObj["name"].as<String>();
+
+            JsonObject params = funcObj["parameters"];
+            for (JsonPair param : params) {
+                Parameter paramData;
+                JsonArray paramArray = param.value().as<JsonArray>();
+                paramData.current_val = paramArray[0];
+                paramData.min = paramArray[1];
+                paramData.max = paramArray[2];
+                paramData.modify_permission = paramArray[3];
+                sensor.function.parameters[param.key().c_str()] = paramData;
+            }
+            sensors.push_back(sensor);
+        }
+        break;
+    }
+      case MOTORS_FIELD:
+        {
+        // Parse Motors
+        JsonArray motorArray = doc["motors"];
+        for (JsonObject entry : motorArray) {
+            Motor motor;
+            motor.name = entry["name"].as<String>();
+            motor.type = entry["type"].as<String>();
+
+            JsonArray pinsArray = entry["pins"];
+            for (JsonObject pin : pinsArray) {
+                MotorPin motorPin;
+                motorPin.type = pin["type"].as<String>();
+                motorPin.pin_number = pin["pin_number"].as<int>();
+                motor.pins.push_back(motorPin);
+            }
+
+            JsonArray threshold = entry["safety_threshold"].as<JsonArray>();
+            motor.safety_threshold.current_val = threshold[0];
+            motor.safety_threshold.min = threshold[1];
+            motor.safety_threshold.max = threshold[2];
+            motor.safety_threshold.modify_permission = threshold[3];
+            motors.push_back(motor);
+        }
+        break;
+        }
+      case FUNCTIONS_FIELD: {
+        // Parse Functions
+        JsonArray actionArray = doc["functions"];
+        for (JsonObject entry : actionArray) {
+            Function function;
+            function.name = entry["name"].as<String>();
+            function.protocol_type = entry["protocol_type"].as<String>();
+            functions.push_back(function);
+        }
+        break;
+      }
+    default:
+        Serial.println("Unknown field type!");
+        break;
+  }
+}
+
+
+void parseYAMLDemo (const String& yamlContent) {
+  JsonDocument doc; 
+  // Parse the YAML string into a JsonDocument
+  DeserializationError error = deserializeYml(doc, yamlContent.c_str());
+  if ( error ) {
+    Serial.print("Failed to parse YAML: ");
+    Serial.println(error.f_str());
+    return;
+  }
+  serializeJson(doc, Serial);
+  Serial.println();
+  // Parse File Type
+  fileType = doc["file_type"].as<String>();
+
+  // Parse General Entries
+  JsonArray generalArray = doc["general"];
+  for (JsonObject entry : generalArray) {
+      General gen;
+      gen.name = entry["name"].as<String>();
+      gen.code = entry["code"].as<int>();
+      generalEntries.push_back(gen);
+  }
+
+  // Parse Communications
+  JsonArray commArray = doc["communications"];
+  for (JsonObject entry : commArray) {
+      Communication comm;
+      comm.name = entry["name"].as<String>();
+      comm.status = entry["status"].as<String>();
+      comm.ssid = entry["ssid"].as<String>();
+      comm.password = entry["password"].as<String>();
+      comm.mac = entry["mac"].as<String>();
+      comm.serviceUUID = entry["SERVICE1_UUID"].as<String>();
+      comm.characteristicUUID = entry["CHARACTERISTIC1_UUID"].as<String>();
+      communications.push_back(comm);
+  }
+
+  // Parse Sensors
+  JsonArray sensorArray = doc["sensors"];
+  for (JsonObject entry : sensorArray) {
+      Sensor sensor;
+      Serial.printf("\n%s, %s, %s\n" ,entry["name"].as<String>(),entry["status"].as<String>(),entry["type"].as<String>());
+      sensor.name = entry["name"].as<String>();
+      sensor.status = entry["status"].as<String>();
+      sensor.type = entry["type"].as<String>();
+
+      JsonObject funcObj = entry["function"];
+      sensor.function.name = funcObj["name"].as<String>();
+
+      JsonObject params = funcObj["parameters"];
+      for (JsonPair param : params) {
+          Parameter paramData;
+          JsonArray paramArray = param.value().as<JsonArray>();
+          paramData.current_val = paramArray[0];
+          paramData.min = paramArray[1];
+          paramData.max = paramArray[2];
+          paramData.modify_permission = paramArray[3];
+          sensor.function.parameters[param.key().c_str()] = paramData;
+      }
+      sensors.push_back(sensor);
+  }
+
+  // Parse Motors
+  JsonArray motorArray = doc["motors"];
+  for (JsonObject entry : motorArray) {
+      Motor motor;
+      motor.name = entry["name"].as<String>();
+      motor.type = entry["type"].as<String>();
+
+      JsonArray pinsArray = entry["pins"];
+      for (JsonObject pin : pinsArray) {
+          MotorPin motorPin;
+          motorPin.type = pin["type"].as<String>();
+          motorPin.pin_number = pin["pin_number"].as<int>();
+          motor.pins.push_back(motorPin);
+      }
+
+      JsonArray threshold = entry["safety_threshold"].as<JsonArray>();
+      motor.safety_threshold.current_val = threshold[0];
+      motor.safety_threshold.min = threshold[1];
+      motor.safety_threshold.max = threshold[2];
+      motor.safety_threshold.modify_permission = threshold[3];
+      motors.push_back(motor);
+  }
+
+  // Parse Actions
+  JsonArray actionArray = doc["functions"];
+  for (JsonObject entry : actionArray) {
+      Function function;
+      function.name = entry["name"].as<String>();
+      function.protocol_type = entry["protocol_type"].as<String>();
+      functions.push_back(function);
+  }
+}
+
 void printGeneral(const General& general) {
     Serial.println("General:");
     Serial.print("  Name: ");
@@ -362,42 +516,42 @@ void printFunction(const Function& function) {
     Serial.println(function.protocol_type);
 }
 
-void printAllStructs(
-    const std::vector<Sensor>& sensors,
-    const std::vector<Motor>& motors,
-    const std::vector<Function>& functions) {
-!
-    Serial.println("=== Sensors ===");
-    for (const auto& sensor : sensors) {
-        printSensor(sensor);
-        Serial.println();
-    }
+// void printAllStructs(
+//     const std::vector<Sensor>& sensors,
+//     const std::vector<Motor>& motors,
+//     const std::vector<Function>& functions) {
+//     Serial.println("=== Sensors ===");
+//     for (const auto& sensor : sensors) {
+//         printSensor(sensor);
+//         Serial.println();
+//     }
 
-    Serial.println("=== Motors ===");
-    for (const auto& motor : motors) {
-        printMotor(motor);
-        Serial.println();
-    }
+//     Serial.println("=== Motors ===");
+//     for (const auto& motor : motors) {
+//         printMotor(motor);
+//         Serial.println();
+//     }
 
-    Serial.println("=== Functions ===");
-    for (const auto& function : functions) {
-        printFunction(function);
-        Serial.println();
-    }
+//     Serial.println("=== Functions ===");
+//     for (const auto& function : functions) {
+//         printFunction(function);
+//         Serial.println();
+//     }
 
-    Serial.println("=== End of Configuration ===");
-}
+//     Serial.println("=== End of Configuration ===");
+// }
 
 void init_yaml() {
 
-  // // turn on if you want to write a default yaml file on the mcu
-  // const char* yamlContent = create_yaml_on_spiff(config_yaml);
+//   // // turn on if you want to write a default yaml file on the mcu
+//   // const char* yamlContent = create_yaml_on_spiff(config_yaml);
   
-  // turn on if you want only to create a string in a yaml file for debuging
-  const char* yamlContent = create_default_yaml_string();
-  parseYAML(yamlContent);
-  //// in case you want to print the structs use the function below 
-  //printAllStructs(sensors, motors, functions);
+//   // turn on if you want only to create a string in a yaml file for debuging
+//   //char* yamlContent = create_default_yaml_string();
+//   //parseYAML(yamlContent);
+  
+//   //// in case you want to print the structs use the function below 
+//   //printAllStructs(sensors, motors, functions);
 }
 
 void init_default_yaml() {
@@ -407,9 +561,6 @@ void init_default_yaml() {
   
   // turn on if you want only to create a string in a yaml file for debuging
   const char* yamlContent = create_default_yaml_string();
-  parseYAML(yamlContent);
-
-  //// in case you want to print the structs use the function below 
-  printAllStructs(sensors, motors, functions);
+  parseYAMLDemo(yamlContent);
 }
-
+#endif //SHARED_YAMEL_PARSER_H

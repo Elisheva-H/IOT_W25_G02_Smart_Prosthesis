@@ -10,14 +10,16 @@
 #include <Arduino.h>
 #include <NimBLEDevice.h>
 
-//#include "shared_com_vars.h"
+#include "shared_com_vars.h"
 #include "requests.h"
+#include "create_yaml_file.h"
+#include "shared_yaml_parser.h"
 
 static const NimBLEAdvertisedDevice* advDevice;
 static bool                          doConnect  = false;
 static uint32_t                      scanTimeMs = 5000; /** scan time in milliseconds, 0 = scan forever */
-#define SERVICE_UUID        "12345678-1234-5678-1234-56789abcdef0"
-#define CHARACTERISTIC_UUID "12345678-1234-5678-1234-56789abcdef1"
+#define SERVICE_UUID        "12345678-1234-5678-1234-56789abcdef3"
+#define CHARACTERISTIC_UUID "12345678-1234-5678-1234-56789abcdef4"
 
 /**  None of these are required as they will be handled by the library with defaults. **
  **                       Remove as you see fit for your needs                        */
@@ -26,7 +28,7 @@ class ClientCallbacks : public NimBLEClientCallbacks {
 
     void onDisconnect(NimBLEClient* pClient, int reason) override {
         Serial.printf("%s Disconnected, reason = %d - Starting scan\n", pClient->getPeerAddress().toString().c_str(), reason);
-        NimBLEDevice::getScan()->start(scanTimeMs, false, true);
+        NimBLEDevice::getScan()->start(scanTimeMs, false, false);
     }
 
     /********************* Security handled here *********************/
@@ -105,8 +107,8 @@ void notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData,
     int checksum_result=calculateChecksum(msg_to_calc, (size_t)msg->msg_length);
     Serial.printf("calculate checksum result is: %d, desired checksum is: %d\n",checksum_result,msg->checksum);
     print_msg(msg);
-    if (msg->req_type==msg_type::gest_req) {
-      uint8_t* msg_bytes = str_to_byte_msg(msg_type::gest_ans,msg->msg);
+    if (msg->req_type==GEST_REQ) {
+      uint8_t* msg_bytes = str_to_byte_msg(GEST_ANS,msg->msg);
       uint16_t len = sizeof(struct msg_interp);
       print_msg((struct msg_interp*)msg_bytes);
       //TODO: add function call to use gesture 
@@ -115,8 +117,31 @@ void notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData,
       pRemoteCharacteristic->writeValue(msg_bytes,sizeof(struct msg_interp));
       Serial.println("sent acknowledge");
     }
-    //free(msg);
+    if (msg->req_type==YAML_REQ) {
+      Serial.println("Recivied yaml reuqest, sendind yaml");
+      //const char *msg_str=(readYAML()).c_str();
+      const char *msg_str=create_default_yaml_string();
+      Serial.printf("\nYAML:\n%s\n",msg_str);
+      int total_msg_num = ceil(((float)strlen(msg_str))/((float)(MAX_MSG_LEN-1)));
+      size_t total_msg_len = strlen(msg_str);
+      if (total_msg_num>1){Serial.println("The message is too long, dividing into multiple sends");}
+      for (int msg_num=1;msg_num<=total_msg_num;msg_num++){
+        uint8_t* msg_bytes = str_to_byte_msg(YML_SENSOR_ANS,msg_str,msg_num, total_msg_num);
+        uint16_t len = sizeof(struct msg_interp);
+        print_msg((struct msg_interp*)msg_bytes);
+        pRemoteCharacteristic->writeValue(msg_bytes, len);
+          //TO DO- error handling
+        free(msg_bytes);
+        print_msg((struct msg_interp*)msg_bytes);
+
+      }
+      Serial.println("Sent yaml");
+
+    }
+    free(msg);
   }
+
+
 
 /** Handles the provisioning of clients and connects / interfaces with the server */
 bool connectToServer() {
@@ -273,9 +298,9 @@ bool connectToServer() {
 
 void setup() {
     Serial.begin(115200);
-    Serial.println(1000);
+    delay(1000);
     Serial.printf("Starting NimBLE Client\n");
-
+    init_yaml();
     /** Initialize NimBLE and set the device name */
     NimBLEDevice::init("NimBLE-Client");
 
