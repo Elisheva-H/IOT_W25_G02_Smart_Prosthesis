@@ -1,12 +1,3 @@
-
-/** NimBLE_Client Demo:
- *
- *  Demonstrates many of the available features of the NimBLE client library.
- *
- *  Created: on March 24 2020
- *      Author: H2zero
- */
-
 #include <Arduino.h>
 #include <NimBLEDevice.h>
 
@@ -118,7 +109,7 @@ void notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData,
       Serial.println("sent acknowledge");
     }
     if (msg->req_type==YAML_REQ) {
-      Serial.println("Recivied yaml reuqest, sendind yaml");
+      Serial.println("Received yaml reuqest, sendind yaml");
       //const char *msg_str=(readYAML()).c_str();
       const char *msg_str=create_default_yaml_string();
       Serial.printf("\nYAML:\n%s\n",msg_str);
@@ -138,6 +129,50 @@ void notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData,
       Serial.println("Sent yaml");
 
     }
+
+
+    ///////////////////////////////////////////////
+    //////   EDIT REQ - STILL IN PROCESS    ///////
+    ///////////////////////////////////////////////
+    /*
+    if (msg->req_type==EDIT_REQ) {
+      Serial.println("Received edit reuqest");
+      char msg_copy[MAX_MSG_LEN];
+      strcpy(msg_copy, msg->msg);
+
+      // Tokenize the message using "->" as the delimiter
+      char* sens_name = strtok(msg_copy, "->");
+      char* fun_name = strtok(nullptr, "->");
+      char* param_name = strtok(nullptr, "->");
+      char* val_str = strtok(nullptr, "->");
+
+      int val_int = atoi(val_str);
+
+      for (auto& sensor : sensors) {
+        if (sensor.name == sens_name && sensor.function.name == fun_name) { 
+          auto it = sensor.function.parameters.find(param_name);
+          it->second.current_val = val_int; // Update the current value
+          Serial.printf("Updated %s in %s -> %s to %d\n", param_name, sens_name, fun_name, val_int);
+        } else {
+          Serial.printf("Parameter %s not found in %s -> %s \n", param_name, sens_name, fun_name);
+        }
+      }
+      /////////////////////////////
+      //    ADD WRITE VALUE!!    //
+      /////////////////////////////
+
+      //pRemoteCharacteristic->writeValue(###### ADD EDIT CONFIRMATION #####, len);
+      
+      
+      //TO DO- error handling
+      Serial.println("Editted val");
+    }
+    */
+    ///////////////////////////////////////////////
+    //////   END OF EDIT REQ                ///////
+    ///////////////////////////////////////////////
+
+    ///////////////////////////////////////////////
     free(msg);
   }
 
