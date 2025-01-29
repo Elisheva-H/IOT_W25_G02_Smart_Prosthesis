@@ -28,7 +28,7 @@ String readYAML(){
   File file = SPIFFS.open(config_yaml, FILE_READ);
   String yamlContent = file.readString();
   file.close();
-  Serial.printf("\nYAML:\n%s\n",yamlContent);
+  Serial.printf("\nYAML:\n%s\n",yamlContent.c_str());
   return yamlContent;
 }
 
@@ -40,20 +40,20 @@ String ReadYmlUsingSPIFFS(String DefaultYamlContent) {
   }
   Serial.println("SPIFFS initialized successfully!");
   // /////////////// in case you want to remove the yaml file before rewriting
-  // if (SPIFFS.exists(config_yaml)) {
-  //       Serial.print("Deleting file: ");
-  //       Serial.println(config_yaml);
+  if (SPIFFS.exists(config_yaml)) {
+        Serial.print("Deleting file: ");
+        Serial.println(config_yaml);
 
-  //       // Delete the file
-  //       if (SPIFFS.remove(config_yaml)) {
-  //           Serial.println("File deleted successfully");
-  //       } else {
-  //           Serial.println("Failed to delete the file");
-  //       }
-  //   } else {
-  //       Serial.print("File does not exist: ");
-  //       Serial.println(config_yaml);
-  // }
+        // Delete the file
+        if (SPIFFS.remove(config_yaml)) {
+            Serial.println("File deleted successfully");
+        } else {
+            Serial.println("Failed to delete the file");
+        }
+    } else {
+        Serial.print("File does not exist: ");
+        Serial.println(config_yaml);
+  }
   ///////////////
   if ( SPIFFS.exists(config_yaml)) {
     Serial.println("File "+ config_yaml +" found!");

@@ -1,12 +1,4 @@
 
-/** NimBLE_Client Demo:
- *
- *  Demonstrates many of the available features of the NimBLE client library.
- *
- *  Created: on March 24 2020
- *      Author: H2zero
- */
-
 #include <Arduino.h>
 #include <NimBLEDevice.h>
 
@@ -100,15 +92,16 @@ void notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData,
     //str             += ", Value = " + std::string((char*)pData, length);
     
     print_byte_array(length, pData);
+    Serial.println("Recived request");
 
-    struct msg_interp* msg = (struct msg_interp*)malloc(sizeof(struct msg_interp));
-    *msg = *((struct msg_interp*)pData);
-    char* msg_to_calc=msg->msg;
-    int checksum_result=calculateChecksum(msg_to_calc, (size_t)msg->msg_length);
-    Serial.printf("calculate checksum result is: %d, desired checksum is: %d\n",checksum_result,msg->checksum);
-    print_msg(msg);
-    if (msg->req_type==GEST_REQ) {
-      uint8_t* msg_bytes = str_to_byte_msg(GEST_ANS,msg->msg);
+    struct msg_interp* recived_data = (struct msg_interp*)malloc(sizeof(struct msg_interp));
+    *recived_data = *((struct msg_interp*)pData);
+    char* msg_to_calc=recived_data->msg;
+    int checksum_result=calculateChecksum(msg_to_calc, (size_t)recived_data->msg_length);
+    Serial.printf("calculate checksum result is: %d, desired checksum is: %d\n",checksum_result,recived_data->checksum);
+    print_msg(recived_data);
+    if (recived_data->req_type==GEST_REQ) {
+      uint8_t* msg_bytes = str_to_byte_msg(GEST_ANS,recived_data->msg);
       uint16_t len = sizeof(struct msg_interp);
       print_msg((struct msg_interp*)msg_bytes);
       //TODO: add function call to use gesture 
@@ -117,29 +110,58 @@ void notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData,
       pRemoteCharacteristic->writeValue(msg_bytes,sizeof(struct msg_interp));
       Serial.println("sent acknowledge");
     }
-    if (msg->req_type==YAML_REQ) {
-      Serial.println("Recivied yaml reuqest, sendind yaml");
-      //const char *msg_str=(readYAML()).c_str();
-      const char *msg_str=create_default_yaml_string();
-      Serial.printf("\nYAML:\n%s\n",msg_str);
-      int total_msg_num = ceil(((float)strlen(msg_str))/((float)(MAX_MSG_LEN-1)));
-      size_t total_msg_len = strlen(msg_str);
-      if (total_msg_num>1){Serial.println("The message is too long, dividing into multiple sends");}
-      for (int msg_num=1;msg_num<=total_msg_num;msg_num++){
-        uint8_t* msg_bytes = str_to_byte_msg(YML_SENSOR_ANS,msg_str,msg_num, total_msg_num);
-        uint16_t len = sizeof(struct msg_interp);
-        print_msg((struct msg_interp*)msg_bytes);
-        pRemoteCharacteristic->writeValue(msg_bytes, len);
-          //TO DO- error handling
-        free(msg_bytes);
-        print_msg((struct msg_interp*)msg_bytes);
-
-      }
-      Serial.println("Sent yaml");
-
+    if (recived_data->req_type==YAML_REQ) {
+      Serial.println("Recivied yaml reuqest, sendind sensors data");
+      char* sensors_splited_field;
+      splitYaml(readYAML().c_str(),NULL,&sensors_splited_field,NULL,NULL);    
+      ////Sending sensors data
+      SendNotiyToClient(sensors_splited_field, YML_SENSOR_ANS, pRemoteCharacteristic);      
     }
-    free(msg);
-  }
+    if (recived_data->req_type==YML_MOTORS_REQ){
+      // //Sending motors data
+      char* motors_splited_field;
+      splitYaml(readYAML().c_str(),NULL,NULL,&motors_splited_field,NULL);    
+      SendNotiyToClient(motors_splited_field, YML_MOTORS_ANS, pRemoteCharacteristic);      
+    }
+    if (recived_data->req_type==YML_FUNC_REQ){
+      // //Sending motors data
+      char* functions_splited_field;
+      splitYaml(readYAML().c_str(),NULL,NULL,NULL,&functions_splited_field);    
+      SendNotiyToClient(functions_splited_field, YML_FUNC_ANS, pRemoteCharacteristic);
+    }
+    if (recived_data->req_type==YML_GENERAL_REQ){
+      // //Sending motors data
+      char* general_splited_field;
+      splitYaml(readYAML().c_str(),&general_splited_field, NULL,NULL,NULL);    
+      SendNotiyToClient(general_splited_field, YML_GENERAL_ANS, pRemoteCharacteristic);
+      Serial.println("Finished sending yaml data");
+    }
+      // //       // Sending functions data
+      // int total_functions_num = ceil(((float)strlen(functions_splited_field))/((float)(MAX_MSG_LEN-1)));
+      // //size_t total_msg_len = strlen(functions_splited_field);
+      // if (total_functions_num>1){Serial.println("The message is too long, dividing into multiple sends");}
+      // for (int msg_num=1;msg_num<=total_functions_num;msg_num++){
+      //   uint8_t* functions_msg_bytes = str_to_byte_msg(YML_FUNC_ANS,functions_splited_field,msg_num, total_functions_num);
+      //   uint16_t len = sizeof(struct msg_interp);
+      //   print_msg((struct msg_interp*)functions_msg_bytes);
+      //   pRemoteCharacteristic->writeValue(functions_msg_bytes, len);
+      //     //TO DO- error handling
+      //   free(functions_msg_bytes);
+      // }
+      //             // Sending general data
+      // int total_general_num = ceil(((float)strlen(general_splited_field))/((float)(MAX_MSG_LEN-1)));
+      // //size_t total_msg_len = strlen(general_splited_field);
+      // if (total_general_num>1){Serial.println("The message is too long, dividing into multiple sends");}
+      // for (int msg_num=1;msg_num<=total_general_num;msg_num++){
+      //   uint8_t* general_msg_bytes = str_to_byte_msg(YML_GENERAL_ANS,general_splited_field,msg_num, total_general_num);
+      //   uint16_t len = sizeof(struct msg_interp);
+      //   print_msg((struct msg_interp*)general_msg_bytes);
+      //   pRemoteCharacteristic->writeValue(general_msg_bytes, len);
+      //     //TO DO- error handling
+      //   free(general_msg_bytes);
+      // }
+  free(recived_data);
+}
 
 
 
@@ -300,30 +322,18 @@ void setup() {
     Serial.begin(115200);
     delay(1000);
     Serial.printf("Starting NimBLE Client\n");
+    // /////////DEBUGING TODO REMOVE
+    // splitFunctionsField();
+    // splitSensorsField();
+    // splitGeneralField();
+    // splitMotorsField();
+    /////////////
     init_yaml();
+   
     /** Initialize NimBLE and set the device name */
     NimBLEDevice::init("NimBLE-Client");
 
-    /**
-     * Set the IO capabilities of the device, each option will trigger a different pairing method.
-     *  BLE_HS_IO_KEYBOARD_ONLY   - Passkey pairing
-     *  BLE_HS_IO_DISPLAY_YESNO   - Numeric comparison pairing
-     *  BLE_HS_IO_NO_INPUT_OUTPUT - DEFAULT setting - just works pairing
-     */
-    // NimBLEDevice::setSecurityIOCap(BLE_HS_IO_KEYBOARD_ONLY); // use passkey
-    // NimBLEDevice::setSecurityIOCap(BLE_HS_IO_DISPLAY_YESNO); //use numeric comparison
-
-    /**
-     * 2 different ways to set security - both calls achieve the same result.
-     *  no bonding, no man in the middle protection, BLE secure connections.
-     *  These are the default values, only shown here for demonstration.
-     */
-    // NimBLEDevice::setSecurityAuth(false, false, true);
-
-    NimBLEDevice::setSecurityAuth(/*BLE_SM_PAIR_AUTHREQ_BOND | BLE_SM_PAIR_AUTHREQ_MITM |*/ BLE_SM_PAIR_AUTHREQ_SC);
-
-    /** Optional: set the transmit power */
-    NimBLEDevice::setPower(3); /** 3dbm */
+  
     NimBLEScan* pScan = NimBLEDevice::getScan();
 
     /** Set the callbacks to call when scan events occur, no duplicates */

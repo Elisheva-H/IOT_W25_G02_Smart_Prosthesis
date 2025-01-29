@@ -1,3 +1,4 @@
+#include "HardwareSerial.h"
 #ifndef SHARED_YAMEL_PARSER_H
 #define SHARED_YAMEL_PARSER_H
 
@@ -7,6 +8,9 @@
 #include <ArduinoJson.h>
 #include <YAMLDuino.h>
 #include "create_yaml_file.h"
+
+#include <stdio.h>
+#include <string.h>
 
 // Communication struct
 struct Communication {
@@ -78,6 +82,26 @@ std::vector<Function> functions;
 
 const char* create_default_yaml_string(){
   const char* yamlContent = R"(
+file_type: hand_system_configuration
+
+general:
+  - name: 'Technician_code'
+    code: 2025
+  - name: 'Debug_code'
+    code: 2024
+
+communications:
+  - name: 'WiFi_server'
+    status: 'off'
+    ssid: 'user_HAND'
+    password: 'Haifa3D'
+
+  - name: 'BLE_client'
+    status: 'on'
+    mac: '11-11-11-11'
+    SERVICE1_UUID: "6c09a8a9-be78-4596-9557-3c4bb4965058"
+    CHARACTERISTIC1_UUID: "6c09a8a9-be78-4596-9558-3c4bb4965058"
+
 sensors:
   - name: 'leg_pressure_sensor'
     status: 'on'
@@ -98,16 +122,204 @@ sensors:
         param_1: [60,20,100,true]
         high_thld: [30,20,100,true]
         low_thld: [80,20,100,true]
+
+motors:
+  - name: 'finger1_dc'
+    type: 'DC_motor'
+    pins:
+      - type: 'in1_pin'
+        pin_number: 19
+      - type: 'in2_pin'
+        pin_number: 21
+      - type: 'sense_pin'
+        pin_number: 34
+    safety_threshold: [20,10,50,true]
+
+  - name: 'finger2_dc'
+    type: 'DC_motor'
+    pins:
+      - type: 'in1_pin'
+        pin_number: 23
+      - type: 'in2_pin'
+        pin_number: 22
+      - type: 'sense_pin'
+        pin_number: 35
+    safety_threshold: [20,10,50,true]
+
+  - name: 'finge3_dc'
+    type: 'DC_motor'
+    pins:
+      - type: 'in1_pin'
+        pin_number: 4
+      - type: 'in2_pin'
+        pin_number: 16
+      - type: 'sense_pin'
+        pin_number: 32
+    safety_threshold: [20,10,50,true]
+
+  - name: 'finge4_dc'
+    type: 'DC_motor'
+    pins:
+      - type: 'in1_pin'
+        pin_number: 18
+      - type: 'in2_pin'
+        pin_number: 17
+      - type: 'sense_pin'
+        pin_number: 33
+    safety_threshold: [20,10,50,true]
+
+  - name: 'turn_dc'
+    type: 'DC_motor'
+    pins:
+      - type: 'in1_pin'
+        pin_number: 26
+      - type: 'in2_pin'
+        pin_number: 27
+      - type: 'sense_pin'
+        pin_number: 36
+    safety_threshold: [20,10,50,true]
+
+functions:
+  - name: 'send_debug_data'
+    protocol_type: 'return_data'
+
+  - name: 'run_motors'
+    protocol_type: 'modify_only'
+
+  - name: 'rock'
+    protocol_type: 'gesture'
+
+  - name: 'scissors'
+    protocol_type: 'gesture'
+
+  - name: 'paper'
+    protocol_type: 'gesture'
 )";
   return yamlContent;
 }
 
-void parseYAML(const String& yamlContent) {
+
+// //general_splited_field, &sensors_splited_field, &motors_splited_field, &functions_splited_field
+// void splitYaml(const char* yaml, char **general_splited_field=NULL, char **sensors_splited_field=NULL, char **motors_splited_field=NULL, char **functions_splited_field=NULL) {
+//     Serial.println("recived yamel buffer, splitting");
+//     const char *start_general = strstr(yaml, "general:");
+//     const char *start_sensors = strstr(yaml, "sensors:");
+//     const char *start_motors = strstr(yaml, "motors:");
+//     const char *start_functions = strstr(yaml, "functions:");
+//     Serial.println("finished start inds");
+
+//     // Find the end of each section by locating the next section or end of string
+//     const char *end_general = start_sensors ? strstr(start_sensors, "sensors:") : NULL;
+//     const char *end_sensors = start_motors ? strstr(start_motors, "motors:") : NULL;
+//     const char *end_motors = start_functions ? strstr(start_functions, "functions:") : NULL;
+//     const char *end_functions = NULL; // Functions section ends at the end of the string
+//     Serial.println("finished end inds");
+
+//     // Copy each section into the respective output strings
+//     if (start_general) {
+//         size_t len = (end_general ? end_general : yaml + strlen(yaml)) - start_general;
+//         *general_splited_field = (char*) malloc((len+1)*sizeof(char));
+//         strncpy(*general_splited_field, start_general, len);
+//         (*general_splited_field)[len] = '\0';
+//     }
+//     Serial.println("finished start general");
+
+//     if (start_sensors) {
+//         size_t len = (end_sensors ? end_sensors : yaml + strlen(yaml)) - start_sensors;
+//         *sensors_splited_field = (char*) malloc((len+1)*sizeof(char));
+//         strncpy(*sensors_splited_field, start_sensors, len);
+//         (*sensors_splited_field)[len] = '\0';
+//     }
+//     Serial.println("finishedsensors");
+
+//     if (start_motors) {
+//         size_t len = (end_motors ? end_motors : yaml + strlen(yaml)) - start_motors;
+//         *motors_splited_field = (char*) malloc((len+1)*sizeof(char));
+//         strncpy(*motors_splited_field, start_motors, len);
+//         (*motors_splited_field)[len] = '\0';
+//     }
+//     Serial.println("finished motors");
+
+//     if (start_functions) {
+//         size_t len = (end_functions ? end_functions : yaml + strlen(yaml)) - start_functions;
+//         *functions_splited_field = (char*) malloc((len+1)*sizeof(char));
+//         strncpy(*functions_splited_field, start_functions, len);
+//         (*functions_splited_field)[len] = '\0';
+//     }
+//     Serial.println("finished functions");
+
+//   Serial.println("yaml splited. ready for parsing");
+// }
+//void splitFunctionsField(const char* yaml, char ** functions_splited_field) {
+
+//general_splited_field, &sensors_splited_field, &motors_splited_field, &functions_splited_field
+void splitYaml(const char* yaml, char **general_splited_field, char **sensors_splited_field, char **motors_splited_field, char **functions_splited_field) {
+    Serial.println("recived yamel buffer, splitting");
+    // const char *start_general = general_splited_field ? strstr(yaml, "general:") : NULL;
+    // const char *start_sensors = sensors_splited_field ? strstr(yaml, "sensors:") : NULL;
+    // const char *start_motors = motors_splited_field ? strstr(yaml, "motors:") : NULL;
+    // const char *start_functions = functions_splited_field ? strstr(yaml, "functions:") : NULL;
+
+
+    const char *start_general = strstr(yaml, "general:");
+    const char *start_sensors = strstr(yaml, "sensors:");
+    const char *start_motors = strstr(yaml, "motors:");
+    const char *start_functions = strstr(yaml, "functions:");
+
+    Serial.println("finished start inds");
+
+
+    // Find the end of each section by locating the next section or end of string
+    const char *end_general = start_sensors ? strstr(start_sensors, "sensors:") : NULL;
+    const char *end_sensors = start_motors ? strstr(start_motors, "motors:") : NULL;
+    const char *end_motors = start_functions ? strstr(start_functions, "functions:") : NULL;
+    const char *end_functions = NULL; // Functions section ends at the end of the string
+    Serial.println("finished end inds");
+
+    // Copy each section into the respective output strings
+    if (start_general && general_splited_field) {
+        size_t len = (end_general ? end_general : yaml + strlen(yaml)) - start_general;
+        *general_splited_field = (char*) malloc((len+1)*sizeof(char));
+        strncpy(*general_splited_field, start_general, len);
+        (*general_splited_field)[len] = '\0';
+    }
+    Serial.println("finished start general");
+
+    if (start_sensors && sensors_splited_field) {
+        size_t len = (end_sensors ? end_sensors : yaml + strlen(yaml)) - start_sensors;
+        *sensors_splited_field = (char*) malloc((len+1)*sizeof(char));
+        strncpy(*sensors_splited_field, start_sensors, len);
+        (*sensors_splited_field)[len] = '\0';
+    }
+    Serial.println("finishedsensors");
+
+    if (start_motors && motors_splited_field) {
+        size_t len = (end_motors ? end_motors : yaml + strlen(yaml)) - start_motors;
+        *motors_splited_field = (char*) malloc((len+1)*sizeof(char));
+        strncpy(*motors_splited_field, start_motors, len);
+        (*motors_splited_field)[len] = '\0';
+    }
+    Serial.println("finished motors");
+
+    if (start_functions && functions_splited_field) {
+        size_t len = (end_functions ? end_functions : yaml + strlen(yaml)) - start_functions;
+        *functions_splited_field = (char*) malloc((len+1)*sizeof(char));
+        strncpy(*functions_splited_field, start_functions, len);
+        (*functions_splited_field)[len] = '\0';
+    }
+    Serial.println("finished functions");
+
+  Serial.println("yaml splited. ready for parsing");
+}
+
+void parseYAML(const char* yamlContent) {
   JsonDocument doc; 
   // Parse the YAML string into a JsonDocument
   //const char * yamlContent2=create_default_yaml_string();
   //DeserializationError error = deserializeYml(doc, yamlContent2);
-  DeserializationError error = deserializeYml(doc, yamlContent.c_str());
+  Serial.printf("\nbefore deserialize\n");
+
+  DeserializationError error = deserializeYml(doc, yamlContent);
   Serial.printf("\nafter deserialize\n");
   if ( error ) {
     Serial.print("Failed to parse YAML: ");
@@ -307,12 +519,12 @@ void init_yaml() {
 
   // // turn on if you want to read the yaml from SPIFFS 
   String yamlContent=ReadYmlUsingSPIFFS(DefaultYamlContent);
-  
+
   // turn on if you want only to create a string in a yaml file for debuging
   //const char* yamlContent = create_default_yaml_string();
 
-  parseYAML(yamlContent);
-  printAllStructs(sensors, motors, functions);
+  parseYAML(yamlContent.c_str());
+  //printAllStructs(sensors, motors, functions);
 }
 
 #endif //SHARED_YAMEL_PARSER_H

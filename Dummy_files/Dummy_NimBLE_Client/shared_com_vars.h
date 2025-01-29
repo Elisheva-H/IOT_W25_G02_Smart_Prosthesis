@@ -17,6 +17,10 @@ enum msg_type{
   YML_SENSOR_ANS, YML_MOTORS_ANS, YML_FUNC_ANS, YML_GENERAL_ANS,
 };
 
+enum yaml_field_type{ 
+  SENSORS_FIELD, FUNCTIONS_FIELD, MOTORS_FIELD, GENERAL_FIELD
+};
+
 struct msg_interp{
   int req_type;
   int cur_msg_count;
