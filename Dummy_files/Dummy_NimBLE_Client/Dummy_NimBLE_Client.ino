@@ -10,8 +10,8 @@
 static const NimBLEAdvertisedDevice* advDevice;
 static bool                          doConnect  = false;
 static uint32_t                      scanTimeMs = 5000; /** scan time in milliseconds, 0 = scan forever */
-#define SERVICE_UUID        "12345678-1234-5678-1234-56789abcdef3"
-#define CHARACTERISTIC_UUID "12345678-1234-5678-1234-56789abcdef4"
+#define SERVICE_UUID        "12345678-1234-5678-1234-56789abcdef0"
+#define CHARACTERISTIC_UUID "12345678-1234-5678-1234-56789abcdef1"
 
 /**  None of these are required as they will be handled by the library with defaults. **
  **                       Remove as you see fit for your needs                        */
