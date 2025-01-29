@@ -1,4 +1,3 @@
-
 #include <Arduino.h>
 #include <NimBLEDevice.h>
 
@@ -160,8 +159,50 @@ void notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData,
       //     //TO DO- error handling
       //   free(general_msg_bytes);
       // }
-  free(recived_data);
-}
+    ///////////////////////////////////////////////
+    //////   EDIT REQ - STILL IN PROCESS    ///////
+    ///////////////////////////////////////////////
+    /*
+    if (recived_data->req_type==EDIT_REQ) {
+      Serial.println("Received edit reuqest");
+      char msg_copy[MAX_MSG_LEN];
+      strcpy(msg_copy, recived_data->msg);
+
+      // Tokenize the message using "->" as the delimiter
+      char* sens_name = strtok(msg_copy, "->");
+      char* fun_name = strtok(nullptr, "->");
+      char* param_name = strtok(nullptr, "->");
+      char* val_str = strtok(nullptr, "->");
+
+      int val_int = atoi(val_str);
+
+      for (auto& sensor : sensors) {
+        if (sensor.name == sens_name && sensor.function.name == fun_name) { 
+          auto it = sensor.function.parameters.find(param_name);
+          it->second.current_val = val_int; // Update the current value
+          Serial.printf("Updated %s in %s -> %s to %d\n", param_name, sens_name, fun_name, val_int);
+        } else {
+          Serial.printf("Parameter %s not found in %s -> %s \n", param_name, sens_name, fun_name);
+        }
+      }
+      /////////////////////////////
+      //    ADD WRITE VALUE!!    //
+      /////////////////////////////
+
+      //pRemoteCharacteristic->writeValue(###### ADD EDIT CONFIRMATION #####, len);
+      
+      
+      //TO DO- error handling
+      Serial.println("Editted val");
+    }
+    */
+    ///////////////////////////////////////////////
+    //////   END OF EDIT REQ                ///////
+    ///////////////////////////////////////////////
+
+    ///////////////////////////////////////////////
+    free(recived_data);
+  }
 
 
 

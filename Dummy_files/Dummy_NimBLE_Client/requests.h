@@ -6,9 +6,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "shared_com_vars.h"
 
-char* YAML_JSON; // We need to add the actual file.
 
 void SendNotiyToClient(char* msg_str, int msg_type, NimBLERemoteCharacteristic* pRemoteCharacteristic){
   int total_msg_num = ceil(((float)strlen(msg_str))/((float)(MAX_MSG_LEN-1)));
