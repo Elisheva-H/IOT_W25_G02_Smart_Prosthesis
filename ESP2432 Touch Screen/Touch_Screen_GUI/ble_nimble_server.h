@@ -1,4 +1,3 @@
-#include "HardwareSerial.h"
 #ifndef BLE_NIMBLE_SERVER_H
 #define BLE_NIMBLE_SERVER_H
 
@@ -15,10 +14,24 @@ static NimBLECharacteristic *pCharacteristic;
 
 
 static bool confirmationReceived = false;
+static bool send_yaml_request = false;
+static bool welcome_screen_flag = true;
 std::atomic_flag has_client = ATOMIC_FLAG_INIT;
 std::atomic_flag can_play_gesture = ATOMIC_FLAG_INIT;
-static uint8_t** pointer_to_sensor_buff;
+std::atomic_flag is_demo_yaml = ATOMIC_FLAG_INIT;
 
+
+lv_obj_t* home_tab = NULL;
+lv_obj_t* stat_tab = NULL;
+lv_obj_t* setup_tab = NULL;
+lv_obj_t *welcome_screen  = NULL; //
+
+
+
+// static uint8_t** pointer_to_sensor_buff;
+// static uint8_t** pointer_to_motors_buff;
+// static uint8_t** pointer_to_func_buff;
+// static uint8_t** pointer_to_general_buff;
 
 
 // UUIDs for the service and characteristics
@@ -27,19 +40,7 @@ static uint8_t** pointer_to_sensor_buff;
 #define MSG_SIZE (sizeof(struct msg_interp))
 static NimBLEServer *pServer;
 
-// Class to handle events on connection and discconection from client
-class ServerCallbacks : public NimBLEServerCallbacks {
-    void onConnect(BLEServer* pServer, NimBLEConnInfo & 	connInfo) override {
-        Serial.println("Client connected!");
-        has_client.test_and_set();
-    }
-
-    void onDisconnect(BLEServer* pServer, NimBLEConnInfo & 	connInfo, int reason) override {
-        Serial.println("Client disconnected! Advertsing again");
-        pServer->startAdvertising();
-    }
-};
-
+/***
 // Handle return button - test example
 void return_BLE(){
   char* msg_str="Give YAML";
@@ -54,21 +55,60 @@ void return_BLE(){
     pCharacteristic->notify();
       //TO DO- error handling
     free(msg_bytes);
+    Serial.println("Sent yaml request");
 
   }
 }
+***/
+// Class to handle events on connection and discconection from client
+class ServerCallbacks : public NimBLEServerCallbacks {
+    void onConnect(BLEServer* pServer, NimBLEConnInfo & 	connInfo) override {
+        Serial.println("Client connected!");
+        has_client.test_and_set();
+        send_yaml_request = true;
+    }
 
+    void onDisconnect(BLEServer* pServer, NimBLEConnInfo & 	connInfo, int reason) override {
+        Serial.println("Client disconnected! Advertsing again");
+        has_client.clear();
+        if(!welcome_screen_flag){
+          if(!is_demo_yaml.test_and_set()){
+            is_demo_yaml.clear();
+            lv_event_send(welcome_screen,LV_EVENT_LONG_PRESSED ,NULL);
+          }
+        }
 
+        pServer->startAdvertising();
+    }
+};
+
+// Handle return button - test example
+void return_BLE(){
+  uint8_t* msg_bytes = str_to_byte_msg(0,"Hi! How are you today?! Here is a dot . ");
+  uint16_t len = sizeof(struct msg_interp);
+  // print_msg((struct msg_interp*)msg_bytes);
+  pCharacteristic->setValue(msg_bytes, len);
+  pCharacteristic->notify();
+  free(msg_bytes);
+}
 
 
 // Callback for receiving confirmations from the client
 class MyCallbacks: public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo) {
-    const uint8_t* value = pCharacteristic->getValue().data();
-    //print_byte_array(MSG_SIZE, value); // print byte array for debuging
-    struct msg_interp* struct_val = (struct msg_interp*)value;
+    const uint8_t* recived_data = pCharacteristic->getValue().data();
+    //print_byte_array(MSG_SIZE, recived_data); // print byte array for debuging
+    struct msg_interp* recived_data_struct = (struct msg_interp*)recived_data;
+    // if (isMsgCorrupted()){
+    //   request_msg_again = malloc(strlen(name)+1+4); /* make space for the new string (should check the return value ...) */
+    //   strcpy(name_with_extension, name); /* copy name into the new var */
+    //   strcat(name_with_extension, extension); /* add the extension */
+    //   SendNotiyToClient((char*)recived_data_struct->req_type, RESEND_REQ, pCharacteristic);
+    //   free(name_with_extension);
+    //   return;
+    // }
     //handle client response based on the request
-    switch (struct_val->req_type) {
+    switch (recived_data_struct->req_type) {
       case READ_REQ:
             // Add handling for READ_REQ here
           break;
@@ -77,12 +117,6 @@ class MyCallbacks: public NimBLECharacteristicCallbacks {
           break;
       case FUNC_REQ:
           // Add handling for FUNC_REQ here
-          break;
-      case YAML_REQ:
-          // Add handling for YAML_REQ here
-          break;
-      case GEST_REQ:
-          // Add handling for GEST_REQ here
           break;
       case READ_ANS:
           // Add handling for READ_ANS here
@@ -94,54 +128,52 @@ class MyCallbacks: public NimBLECharacteristicCallbacks {
           // Add handling for FUNC_ANS here
           break;
       case YML_SENSOR_ANS:
-          //Check if the msg was recived succesfully by comparing the msg length and checksum to the desired values 
-            pointer_to_sensor_buff = &sensors_yaml_buffer;
-            ReciveYAMLField(pointer_to_sensor_buff,*struct_val);
-            if (struct_val->tot_msg_count==struct_val->cur_msg_count){
-              //////////////////////////////Dont forget to process!!!///////////
+        //Check if the msg was recived succesfully by comparing the msg length and checksum to the desired values 
+        pointer_to_sensor_buff = &sensors_yaml_buffer;
+        ReciveYAMLField(pointer_to_sensor_buff,*recived_data_struct);
+        if (recived_data_struct->cur_msg_count==recived_data_struct->tot_msg_count){
+          is_yml_sensors_ready = true;
+          SendNotiyToClient("Please send Motors data", YML_MOTORS_REQ, pCharacteristic);
+          Serial.println("Sent Motors data request");
+        }
 
-              //processYAMLField(YML_SENSOR_ANS ,*pointer_to_sensor_buff);
-              // Free the buffer 
-              //////////////////////////////Dont forget to free!!!///////////
-              //free(*pointer_to_sensor_buff);
-              //sensors_yaml_buffer = NULL;  
+        break;
+
+      case YML_MOTORS_ANS:
+        pointer_to_motors_buff = &motors_yaml_buffer;
+        ReciveYAMLField(pointer_to_motors_buff,*recived_data_struct);
+        if (recived_data_struct->cur_msg_count==recived_data_struct->tot_msg_count){
+          is_yml_motors_ready=true;
+          SendNotiyToClient( "Please send functions data", YML_FUNC_REQ, pCharacteristic );
+          Serial.println("Sent functions data request");
+
+        }
+        break;
+
+      case YML_FUNC_ANS:
+          pointer_to_func_buff = &funcs_yaml_buffer;
+          ReciveYAMLField(pointer_to_func_buff,*recived_data_struct);
+          if (recived_data_struct->cur_msg_count==recived_data_struct->tot_msg_count){
+            is_yml_functions_ready=true;
+            SendNotiyToClient( "Please send general data", YML_GENERAL_REQ, pCharacteristic );
+            Serial.println("Sent general data request");
+
           }
-          break;
+          break;     
 
-      // case YML_MOTORS_ANS:
-      //     ReciveYAMLField(motors_yaml_buffer,struct_val);
-      //     processYAMLField(YML_MOTORS_ANS ,motors_yaml_buffer);
-
-          
-      //     // Free the buffer
-      //     free(motors_yaml_buffer);
-      //     motors_yaml_buffer = NULL;  
-          
-      //     break;
-
-      // case YML_FUNC_ANS:
-      //     ReciveYAMLField(funcs_yaml_buffer,struct_val);
-      //     processYAMLField(YML_FUNC_ANS ,funcs_yaml_buffer);
-      //     // Free the buffer 
-      //     free(funcs_yaml_buffer);
-      //     funcs_yaml_buffer = NULL;  
-          
-      //     break;
-
-      // case YML_GENERAL_ANS:
-      //     ReciveYAMLField(general_yaml_buffer,struct_val);
-      //     processYAMLField(YML_GENERAL_ANS,general_yaml_buffer);
-      //     // Free the buffer 
-      //     free(general_yaml_buffer);
-      //     general_yaml_buffer = NULL;  
-      
-      //     break;
+      case YML_GENERAL_ANS:
+          pointer_to_general_buff = &general_yaml_buffer;
+          ReciveYAMLField(pointer_to_general_buff,*recived_data_struct);
+          if (recived_data_struct->cur_msg_count==recived_data_struct->tot_msg_count){
+            is_yml_general_ready=true;
+          }
+          break;     
       case YAML_ANS:
         
         break;
       case GEST_ANS:
-          // Add handling for GEST_ANS here
-          break;
+        can_play_gesture.test_and_set();
+        break;
     default:
         break;
     }
@@ -166,35 +198,39 @@ void sending_gesture(char* gesture_name){
 
 
 void Start_BLE_server_NIMBLE(void* params) {
-    NimBLEDevice::init("");
-    pServer = NimBLEDevice::createServer();
-    NimBLEService *pService = pServer->createService(SERVICE_UUID);
-    pCharacteristic = pService->createCharacteristic(
-                        CHARACTERISTIC_UUID,
-                        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY
-                    );
+  NimBLEDevice::init("");
+  pServer = NimBLEDevice::createServer();
+  NimBLEService *pService = pServer->createService(SERVICE_UUID);
+  pCharacteristic = pService->createCharacteristic(
+                      CHARACTERISTIC_UUID,
+                      NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY
+                  );
 
-    pServer->setCallbacks(new ServerCallbacks());
-    pCharacteristic->setCallbacks(new MyCallbacks());
-    pService->start();
-    NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
-    
-    pAdvertising->setName("UIScreen");
-    pAdvertising->addServiceUUID(NimBLEUUID(SERVICE_UUID));
-    pAdvertising->start();
-   
-    Serial.println("Is advertising");
-    while (1) {
-       
-      if (!confirmationReceived) {
-        //Serial.println("NO");
-      }
-      else {
-        Serial.println("YES");
-        break;
-      }
-        delay(2000);
-    }
+  pServer->setCallbacks(new ServerCallbacks());
+  pCharacteristic->setCallbacks(new MyCallbacks());
+  pService->start();
+  NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
+  
+  pAdvertising->setName("UIScreen");
+  pAdvertising->addServiceUUID(NimBLEUUID(SERVICE_UUID));
+  pAdvertising->start();
+  
+  Serial.println("Server is advertising");
+  while (1) {
+    // if ( send_yaml_request ) {
+    //   SendNotiyToClient("Please send YAML data", YAML_REQ, pCharacteristic);
+    //   Serial.println("Sent yaml request");
+    //   send_yaml_request = false;
+    // }
+    // if (!confirmationReceived) {
+    //   //Serial.println("NO");
+    // }
+    // else {
+    //   break;
+    // }
+    delay(2000);
+  }
 }
 
 #endif //BLE_NIMBLE_SERVER_H
+

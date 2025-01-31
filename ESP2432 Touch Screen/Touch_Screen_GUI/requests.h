@@ -7,11 +7,56 @@
 
 // Initialize YAML flags
 static bool is_yml_general_ready = false;
+// std::atomic_flag is_yml_sensors_ready = ATOMIC_FLAG_INIT;
+
 static bool is_yml_sensors_ready = false;
 static bool is_yml_motors_ready = false;
 static bool is_yml_functions_ready = false;
 
-int isMsgCorrupted(struct msg_interp* struct_val){
+// std::queue<uint8_t*> requestQueue;
+// std::map<uint8_t*, bool> requestStatus;
+
+void SendNotiyToClient(char* msg_str, int msg_type, NimBLECharacteristic *pCharacteristic){
+  int total_msg_num = ceil(((float)strlen(msg_str))/((float)(MAX_MSG_LEN-1)));
+  if (total_msg_num>1){Serial.println("The message is too long, dividing into multiple sends");}
+  for (int msg_num=1;msg_num<=total_msg_num;msg_num++){
+    uint8_t* msg_bytes = str_to_byte_msg(msg_type, msg_str,msg_num, total_msg_num);
+    uint16_t len = sizeof(struct msg_interp);
+    Serial.print("Sending msg:");
+    print_msg((struct msg_interp*)msg_bytes);
+    pCharacteristic->setValue(msg_bytes, len);
+    pCharacteristic->notify();
+      //TO DO- error handling
+    free(msg_bytes);
+  }
+}
+
+
+// void addRequest(uint8_t* request) {
+//     requestQueue.push(request);
+//     requestStatus[request] = false;
+// }
+
+// void processQueue() {
+//     if (!requestQueue.empty()) {
+//         uint8_t* currentRequest = requestQueue.front();
+//         if (!requestStatus[currentRequest]) {
+//           uint16_t len = sizeof(struct msg_interp);
+//           Serial.print("Sending msg again: ");
+//           print_msg((struct msg_interp*)msg_bytes);
+//           pCharacteristic->setValue(msg_bytes, len);
+//           pCharacteristic->notify();
+//             //TO DO- error handling
+//           free(msg_bytes);
+//             sendRequest(currentRequest);
+//         } else {
+//             requestQueue.pop();
+//             requestStatus.erase(currentRequest);
+//         }
+//     }
+// }
+
+bool isMsgCorrupted(struct msg_interp* struct_val){
   if ((struct_val->msg_length!=strlen(struct_val->msg))||
       calculateChecksum(struct_val->msg,struct_val->msg_length)!=(struct_val->checksum)){
             Serial.printf("got msg %d out of %d.\n",struct_val->cur_msg_count,struct_val->tot_msg_count);
@@ -20,139 +65,22 @@ int isMsgCorrupted(struct msg_interp* struct_val){
                             strlen(struct_val->msg), struct_val->msg_length);
             Serial.printf("Calculate MSG checksum is %s to desired cheksum!\n",
                 (struct_val->checksum) == (calculateChecksum(struct_val->msg,struct_val->msg_length)) ? "equal" : "not equal");
-    return 0;
+    return true;
     }
-  return 1;
+  return false;
 }
 
 void ReciveYAMLField(uint8_t** buffer_to_use,struct msg_interp struct_val){
-  Serial.println("Recive YAML Field");
+  Serial.printf("Recived msg %d out of %d.\n", struct_val.cur_msg_count,struct_val.tot_msg_count);
   //print_msg(struct_val);
-  Serial.printf("%d\n",(struct_val.cur_msg_count) );
   if ((struct_val.cur_msg_count)==1) {
-    Serial.println("1");
     *buffer_to_use=(uint8_t*)calloc((struct_val.tot_msg_count)*MAX_MSG_LEN, sizeof(uint8_t));    
-    Serial.println("2");
     if(!(*buffer_to_use)){
       Serial.println("calloc failed");
     }
-    Serial.printf("%d\n",*buffer_to_use);
   } 
-  Serial.println("3");
-  Serial.printf("(struct_val.cur_msg_count-1)%d\n",(struct_val.cur_msg_count-1));
-  Serial.printf("3\n");
-  Serial.printf("printing byte array\n");
-  print_byte_array((struct_val.tot_msg_count)*(MAX_MSG_LEN-1) , *buffer_to_use);
-
   memcpy( (*buffer_to_use) + ((struct_val.cur_msg_count-1)*(MAX_MSG_LEN-1)) , struct_val.msg,  struct_val.msg_length );
-  Serial.println("4");
-
-  if (struct_val.cur_msg_count==struct_val.tot_msg_count){
-    Serial.println("5");
-
-    int tot_length= (struct_val.tot_msg_count-1)*(MAX_MSG_LEN-1)+(struct_val.msg_length)-1;
-    //(*buffer_to_use)[tot_length-1]=0x00;
-    print_byte_array(tot_length+2 , *buffer_to_use);
-    is_yml_sensors_ready=true;
-  }
 }
-
-void processYAMLField(int yml_filed_type, uint8_t* buffer_to_parse) {
-  Serial.println("yaml is ready for splitting and parsing");
-  switch (yml_filed_type) {
-      // case YML_GENERAL_ANS:
-      //   parseYAML(GENERAL_FIELD, (char*) buffer_to_parse);
-      //   break;
-
-      case YML_SENSOR_ANS:
-        if (*buffer_to_parse) {
-          Serial.printf("\n#2:  %s\n",(char*)buffer_to_parse);
-
-          parseYAML(SENSORS_FIELD, (char*)buffer_to_parse);
-
-          // Print Sensor details
-          Serial.println("=== Sensors ===");
-          for (const auto& sensor : sensors) {
-              printSensor(sensor);
-              Serial.println();
-          }
-        } else {Serial.println("Null address");}
-        break;
-
-      case YML_MOTORS_ANS:
-        //parseYAML(MOTORS_FIELD, (char*) buffer_to_parse);
-
-        // Print Motor details
-        Serial.println("=== Motors ===");
-        for (const auto& motor : motors) {
-            printMotor(motor);
-            Serial.println();
-        }
-        break;
-
-      case YML_FUNC_ANS:
-        //parseYAML(FUNCTIONS_FIELD, (char*) buffer_to_parse);
-
-        // Print Function details
-        Serial.println("=== Functions ===");
-        for (const auto& function : functions) {
-            printFunction(function);
-            Serial.println();
-        } 
-      break;
-
-      default:
-        Serial.println("Unknown field type.");
-        break;
-  }
-}
-
-// void recived_YAML(int filed_type){
-//       Serial.println("yaml is ready for splitting and parsing");
-//       char *general_splited_field, *sensors_splited_field, *motors_splited_field, *functions_splited_field;
-      
-//       // Call the function to split YAML
-//       splitYaml(&general_splited_field, &sensors_splited_field, &motors_splited_field, &functions_splited_field);
-
-//     if (general_splited_field ) {
-//       parseYAML(GENERAL_FIELD, (char*) general_splited_field);
-//       printf("General:\n%s\n", general_splited_field);
-//     }
-
-//     if (sensors_splited_field) {
-//       parseYAML(SENSORS_FIELD, (char*) sensors_splited_field);
-//       printf("\nSensors:\n%s\n", sensors_splited_field);
-
-//       // Print Sensor details
-//       Serial.println("=== Sensors ===");
-//       for (const auto& sensor : sensors) {
-//         printSensor(sensor);
-//         Serial.println();
-//       }
-//     }
-
-//     if (motors_splited_field) {
-//       parseYAML(MOTORS_FIELD, (char*) motors_splited_field);
-//       printf("\nMotors:\n%s\n", motors_splited_field);
-
-//       // Print Motor details
-//       Serial.println("=== Motors ===");
-//       for (const auto& motor : motors) {
-//       printMotor(motor);
-//       Serial.println();
-//       }
-//     }
-
-//     if (functions_splited_field) {
-//       parseYAML(FUNCTIONS_FIELD, (char*) functions_splited_field);
-//       printf("\nFunctions:\n%s\n", functions_splited_field);
-
-//       // Print Function details
-//       Serial.println("=== Functions ===");
-//       for (const auto& function : functions) {
-//         printFunction(function);
-//         Serial.println();
-//     }
-// }
 
 #endif //REQUESTS_H
+

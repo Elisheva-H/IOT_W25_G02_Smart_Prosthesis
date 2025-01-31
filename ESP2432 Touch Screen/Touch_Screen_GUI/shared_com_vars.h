@@ -12,6 +12,7 @@ enum msg_type{
   READ_ANS, EDIT_ANS, FUNC_ANS, YAML_ANS, GEST_ANS,
   YML_SENSOR_REQ, YML_MOTORS_REQ, YML_FUNC_REQ, YML_GENERAL_REQ,
   YML_SENSOR_ANS, YML_MOTORS_ANS, YML_FUNC_ANS, YML_GENERAL_ANS,
+  RESEND_REQ
 };
 
 enum yaml_field_type{ 
@@ -76,27 +77,9 @@ void print_byte_array(size_t length, const uint8_t* pData){
 
 
 void print_msg(struct msg_interp* msg){
-  Serial.printf("req_type: %d\n, cur_msg_count: %d\n, tot_msg_count: %d\n, msg_length: %d\n, msg: %s\n, desired checksum: %d\n",
-  msg->req_type, msg->cur_msg_count, msg->tot_msg_count, msg->msg_length, msg->msg, msg->checksum);
+  Serial.printf("msg: %s, req_type: %d, cur_msg_count: %d, tot_msg_count: %d, msg_length: %d, desired checksum: %d\n",
+   msg->msg, msg->req_type, msg->cur_msg_count, msg->tot_msg_count, msg->msg_length, msg->checksum);
 }
 
-
-/////////////////////////////////////////////
-// Simple communication usage example      //
-/////////////////////////////////////////////
-
-// void return_BLE(){
-
-//   uint8_t* msg_bytes = str_to_byte_msg(0,"Hi! How are you today?! Here is a dot . ");
-//   uint16_t len = sizeof(struct msg_interp);
-//   struct msg_interp* try_to_read = (struct msg_interp*)msg_bytes;
-//   Serial.printf("req_type: %d, cur_msg_count: %d, tot_msg_count: %d, msg_length: %d, msg: %s",
-//    try_to_read->req_type, try_to_read->cur_msg_count, try_to_read->tot_msg_count, try_to_read->msg_length, try_to_read->msg);
-
-
-//   pCharacteristic->setValue(msg_bytes, len);
-//   pCharacteristic->notify();
-// }
-
-
 #endif //SHARED_COM_VALS_H
+

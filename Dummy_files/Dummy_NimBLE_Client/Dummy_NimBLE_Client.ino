@@ -5,6 +5,7 @@
 #include "requests.h"
 #include "create_yaml_file.h"
 #include "shared_yaml_parser.h"
+#include "functions_calls_handeling.h"
 
 static const NimBLEAdvertisedDevice* advDevice;
 static bool                          doConnect  = false;
@@ -100,65 +101,35 @@ void notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData,
     Serial.printf("calculate checksum result is: %d, desired checksum is: %d\n",checksum_result,recived_data->checksum);
     print_msg(recived_data);
     if (recived_data->req_type==GEST_REQ) {
-      uint8_t* msg_bytes = str_to_byte_msg(GEST_ANS,recived_data->msg);
-      uint16_t len = sizeof(struct msg_interp);
-      print_msg((struct msg_interp*)msg_bytes);
-      //TODO: add function call to use gesture 
-      delay(3000);
-      // the delay mimic function operation to move the hand...........
-      pRemoteCharacteristic->writeValue(msg_bytes,sizeof(struct msg_interp));
-      Serial.println("sent acknowledge");
+      SimulateGestureRun(recived_data->msg, pRemoteCharacteristic);
     }
     if (recived_data->req_type==YAML_REQ) {
       Serial.println("Recivied yaml reuqest, sendind sensors data");
-      char* sensors_splited_field;
-      splitYaml(readYAML().c_str(),NULL,&sensors_splited_field,NULL,NULL);    
+      char* sensors_splited_field2;
+      splitYaml(readYAML().c_str(),NULL,&sensors_splited_field2,NULL,NULL);    
       ////Sending sensors data
-      SendNotiyToClient(sensors_splited_field, YML_SENSOR_ANS, pRemoteCharacteristic);      
+      SendNotiyToClient(sensors_splited_field2, YML_SENSOR_ANS, pRemoteCharacteristic);      
     }
     if (recived_data->req_type==YML_MOTORS_REQ){
       // //Sending motors data
-      char* motors_splited_field;
-      splitYaml(readYAML().c_str(),NULL,NULL,&motors_splited_field,NULL);    
-      SendNotiyToClient(motors_splited_field, YML_MOTORS_ANS, pRemoteCharacteristic);      
+      char* motors_splited_field2;
+      splitYaml(readYAML().c_str(),NULL,NULL,&motors_splited_field2,NULL);    
+      SendNotiyToClient(motors_splited_field2, YML_MOTORS_ANS, pRemoteCharacteristic);      
     }
     if (recived_data->req_type==YML_FUNC_REQ){
       // //Sending motors data
-      char* functions_splited_field;
-      splitYaml(readYAML().c_str(),NULL,NULL,NULL,&functions_splited_field);    
-      SendNotiyToClient(functions_splited_field, YML_FUNC_ANS, pRemoteCharacteristic);
+      char* functions_splited_field2;
+      splitYaml(readYAML().c_str(),NULL,NULL,NULL,&functions_splited_field2);    
+      SendNotiyToClient(functions_splited_field2, YML_FUNC_ANS, pRemoteCharacteristic);
     }
     if (recived_data->req_type==YML_GENERAL_REQ){
       // //Sending motors data
-      char* general_splited_field;
-      splitYaml(readYAML().c_str(),&general_splited_field, NULL,NULL,NULL);    
-      SendNotiyToClient(general_splited_field, YML_GENERAL_ANS, pRemoteCharacteristic);
+      char* general_splited_field2;
+      splitYaml(readYAML().c_str(),&general_splited_field2, NULL,NULL,NULL);    
+      SendNotiyToClient(general_splited_field2, YML_GENERAL_ANS, pRemoteCharacteristic);
       Serial.println("Finished sending yaml data");
+    
     }
-      // //       // Sending functions data
-      // int total_functions_num = ceil(((float)strlen(functions_splited_field))/((float)(MAX_MSG_LEN-1)));
-      // //size_t total_msg_len = strlen(functions_splited_field);
-      // if (total_functions_num>1){Serial.println("The message is too long, dividing into multiple sends");}
-      // for (int msg_num=1;msg_num<=total_functions_num;msg_num++){
-      //   uint8_t* functions_msg_bytes = str_to_byte_msg(YML_FUNC_ANS,functions_splited_field,msg_num, total_functions_num);
-      //   uint16_t len = sizeof(struct msg_interp);
-      //   print_msg((struct msg_interp*)functions_msg_bytes);
-      //   pRemoteCharacteristic->writeValue(functions_msg_bytes, len);
-      //     //TO DO- error handling
-      //   free(functions_msg_bytes);
-      // }
-      //             // Sending general data
-      // int total_general_num = ceil(((float)strlen(general_splited_field))/((float)(MAX_MSG_LEN-1)));
-      // //size_t total_msg_len = strlen(general_splited_field);
-      // if (total_general_num>1){Serial.println("The message is too long, dividing into multiple sends");}
-      // for (int msg_num=1;msg_num<=total_general_num;msg_num++){
-      //   uint8_t* general_msg_bytes = str_to_byte_msg(YML_GENERAL_ANS,general_splited_field,msg_num, total_general_num);
-      //   uint16_t len = sizeof(struct msg_interp);
-      //   print_msg((struct msg_interp*)general_msg_bytes);
-      //   pRemoteCharacteristic->writeValue(general_msg_bytes, len);
-      //     //TO DO- error handling
-      //   free(general_msg_bytes);
-      // }
     ///////////////////////////////////////////////
     //////   EDIT REQ - STILL IN PROCESS    ///////
     ///////////////////////////////////////////////
@@ -363,14 +334,11 @@ void setup() {
     Serial.begin(115200);
     delay(1000);
     Serial.printf("Starting NimBLE Client\n");
-    // /////////DEBUGING TODO REMOVE
-    // splitFunctionsField();
-    // splitSensorsField();
-    // splitGeneralField();
-    // splitMotorsField();
-    /////////////
+    // call_function("function_a");
+    // call_function("function_c");
+
     init_yaml();
-   
+    call_function("function_a");
     /** Initialize NimBLE and set the device name */
     NimBLEDevice::init("NimBLE-Client");
 
@@ -401,7 +369,5 @@ void loop() {
       } else {
           Serial.printf("Failed to connect, starting scan\n");
       }
-
-      //NimBLEDevice::getScan()->start(scanTimeMs, false, true);
   }
 }

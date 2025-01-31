@@ -82,21 +82,4 @@ void print_msg(struct msg_interp* msg){
 }
 
 
-/////////////////////////////////////////////
-// Simple communication usage example      //
-/////////////////////////////////////////////
-
-// void return_BLE(){
-
-//   uint8_t* msg_bytes = str_to_byte_msg(0,"Hi! How are you today?! Here is a dot . ");
-//   uint16_t len = sizeof(struct msg_interp);
-//   struct msg_interp* try_to_read = (struct msg_interp*)msg_bytes;
-//   Serial.printf("req_type: %d, cur_msg_count: %d, tot_msg_count: %d, msg_length: %d, msg: %s",
-//    try_to_read->req_type, try_to_read->cur_msg_count, try_to_read->tot_msg_count, try_to_read->msg_length, try_to_read->msg);
-
-
-//   pCharacteristic->setValue(msg_bytes, len);
-//   pCharacteristic->notify();
-// }
-
 #endif //SHARED_COM_VALS_H

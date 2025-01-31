@@ -1,3 +1,4 @@
+#include "esp32-hal.h"
 #ifndef REQUESTS_H
 #define REQUESTS_H
 
@@ -10,7 +11,6 @@
 
 void SendNotiyToClient(char* msg_str, int msg_type, NimBLERemoteCharacteristic* pRemoteCharacteristic){
   int total_msg_num = ceil(((float)strlen(msg_str))/((float)(MAX_MSG_LEN-1)));
-  size_t total_msg_len = strlen(msg_str);
   if (total_msg_num>1){Serial.println("The message is too long, dividing into multiple sends");}
   for (int msg_num=1;msg_num<=total_msg_num;msg_num++){
     uint8_t* msg_bytes = str_to_byte_msg(msg_type, msg_str,msg_num, total_msg_num);
@@ -22,7 +22,10 @@ void SendNotiyToClient(char* msg_str, int msg_type, NimBLERemoteCharacteristic* 
   }
 }
 
-
-          //TO DO- error handling
+void SimulateGestureRun(char* msg_str, NimBLERemoteCharacteristic* pRemoteCharacteristic){
+  delay(1500);
+  Serial.printf("Done playing %s, sending acknoweldge", msg_str);
+  SendNotiyToClient(msg_str, GEST_ANS, pRemoteCharacteristic);
+}
 
 #endif //REQUESTS_H

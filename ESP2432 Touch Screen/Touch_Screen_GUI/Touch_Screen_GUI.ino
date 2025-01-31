@@ -5,7 +5,6 @@
 
 #include <Arduino_GFX_Library.h>
 #include "ble_nimble_server.h"
-
 #include "requests.h"
 #include "shared_yaml_parser.h"
 
@@ -23,7 +22,7 @@ Arduino_GFX *gfx = new Arduino_ST7789(bus, -1 /* RST */, 3 /* rotation */, true 
 // define hex_colors
 #define HEX_BLACK lv_color_hex(0x000000) // Black
 #define HEX_WHITE lv_color_hex(0xffffff) // White
-#define HEX_LIGHT_GRAY lv_color_hex(0xd3d3d3) // Light Gray
+#define HEX_LIGHT_GRAY lv_color_hex(0xf4f4f4) // Light Gray
 #define HEX_MEDIUM_GRAY lv_color_hex(0x808080) // Medium Gray
 #define HEX_DARK_GRAY lv_color_hex(0x404040) // Dark Gray
 #define HEX_DARK_BLUE lv_color_hex(0x00008b) // Dark Blue
@@ -41,8 +40,6 @@ Arduino_GFX *gfx = new Arduino_ST7789(bus, -1 /* RST */, 3 /* rotation */, true 
 #define HEX_DARK_PURPLE lv_color_hex(0x663399) // Dark Purple
 #define HEX_YELLOW lv_color_hex(0xf7edbe) // Bannana yellow
 
-
-
 /* Change to your screen resolution */
 static uint32_t screenWidth;
 static uint32_t screenHeight;
@@ -52,58 +49,71 @@ static lv_disp_drv_t disp_drv;
 lv_obj_t *tabview;  // Declare the global tabview variable
 bool is_user = false;
 bool is_tech = false;
-std::atomic_flag is_demo_yaml = ATOMIC_FLAG_INIT;
+bool yaml_structs_ready=false;
 
 //TODO: remove this later and set from BLE
-static char* gest_map[] = {"HIFIVE", "LIKE", "SCISSORS", "ROCK", "PAPER", ""}; // The last element must be an empty string
+// static char* gest_map[] = {"HIFIVE", "LIKE", "SCISSORS", "ROCK", "PAPER", ""}; // The last element must be an empty string
 const char* empty_string = "";
 
-char *tech_pass = "1234";
-char *debug_pass = "1111"; 
 
-
+int tech_pass;
+int debug_pass; 
 
 lv_obj_t *initial_user_screen = NULL; //
-lv_obj_t *welcome_screen  = NULL; //
-
-
-
-
+lv_obj_t * read_yaml_from_prot_screen = NULL;
 
 
 
 void show_password_screen(lv_event_t *e) {
 
   Serial.println("Creating password screen...");
-  
+  for (const auto& user : generalEntries) {
+      if ((strcmp(user.name.c_str(),"Technician_code"))==0){
+        tech_pass = user.code;
+        // snprintf(tech_pass, sizeof(tech_pass), "%04d", user.code);
+        Serial.printf("%s password changed to %d\n",user.name.c_str(),tech_pass);
+      }
+      else if ((strcmp(user.name.c_str(),"Debug_code"))==0) {
+        debug_pass = user.code;
+        // snprintf(debug_pass, sizeof(debug_pass), "%04d", user.code);
+        Serial.printf("%s password changedto %d\n",user.name.c_str(),debug_pass);
+      }
+      else{Serial.printf("User %s is not in user lists\n",user.name.c_str());}
+  } 
+
   // Create a new screen
   lv_obj_t *password_screen = lv_obj_create(NULL); // NULL creates a new screen
-  lv_obj_set_style_bg_color(password_screen, lv_color_black(), 0); // Optional: Set background color
+  lv_obj_set_style_bg_color(password_screen, HEX_LIGHT_GRAY, 0); // Optional: Set background color
 
   // Add a label
   lv_obj_t *label = lv_label_create(password_screen);
-  lv_label_set_text(label, "Enter Password:");
-  lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 10);
+  lv_label_set_recolor(label, true);            
+  lv_label_set_text(label, "#000066 Enter Password: #");
+
+  // lv_label_set_text(label, "#000099 S##000066 P##00007f M##0000b2 T#");
+
+  lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 20);
+  lv_obj_set_style_text_font(label,&lv_font_montserrat_18,0);
+
 
   // Add a text area for password input
   lv_obj_t *textarea = lv_textarea_create(password_screen);
   lv_obj_set_size(textarea, 200, 40);
-  lv_obj_align(textarea, LV_ALIGN_TOP_MID, 0, 50);
+  lv_obj_align(textarea, LV_ALIGN_TOP_MID, 0, 45);
   lv_textarea_set_password_mode(textarea, true);
   lv_textarea_set_one_line(textarea, true);
 
   // Create a custom button matrix
   static const char *btn_map[] = {
-      "1", "2", "3", "\n",
-      "4", "5", "6", "\n",
-      "7", "8", "9", "\n",
-      "0", "OK", "Cancel", ""
+      "1", "2", "3","4","5", "\n",
+      "6","7", "8", "9","0", "\n",
+      "OK", "Cancel",LV_SYMBOL_BACKSPACE, ""
   };
 
   lv_obj_t *btn_matrix = lv_btnmatrix_create(password_screen);
   lv_btnmatrix_set_map(btn_matrix, btn_map);
-  lv_obj_set_size(btn_matrix, 200, 120); // Adjust size as needed
-  lv_obj_align(btn_matrix, LV_ALIGN_BOTTOM_MID, 0, -10);
+  lv_obj_set_size(btn_matrix, 250, 150); // Adjust size as needed
+  lv_obj_align(btn_matrix, LV_ALIGN_BOTTOM_MID, 0, 0);
 
   // Event handler for the button matrix
   lv_obj_add_event_cb(btn_matrix, [](lv_event_t *e) {
@@ -115,14 +125,16 @@ void show_password_screen(lv_event_t *e) {
 
           if (strcmp(btn_text, "OK") == 0) {
               const char *password = lv_textarea_get_text(textarea);
+              int password_int = atoi(password);
 
-              if (is_tech && strcmp(password, tech_pass) == 0) {
+              if (is_tech && password_int==tech_pass) {
                 Serial.print("Correct Tech Password \nMode: Tech \n");
                 setupMainUI(); // Load the main UI with the "Tech" tab
-              } else if (!is_tech && strcmp(password, debug_pass) == 0) {
+              } else if (!is_tech && password_int == debug_pass) {
                 Serial.printf("Correct Debug Password \nMode: Debug \n");
                 setupMainUI(); // Load the main UI with the "Debug" tab
-              } else {
+              } 
+              else {
                   Serial.println("Incorrect Password:");
                   Serial.println(password);
                   is_tech = false;
@@ -131,12 +143,14 @@ void show_password_screen(lv_event_t *e) {
           } else if (strcmp(btn_text, "Cancel") == 0) {
               is_tech = false;
               lv_scr_load(initial_user_screen); // Return to the main screen
+          } else if (strcmp(btn_text, LV_SYMBOL_BACKSPACE) == 0) {
+              lv_textarea_del_char(textarea);
           } else {
               // Append the pressed key to the textarea
               lv_textarea_add_text(textarea, btn_text);
           }
       }
-  }, LV_EVENT_VALUE_CHANGED, textarea);
+  }, LV_EVENT_CLICKED, textarea);
 
   // Load the new screen
   lv_scr_load(password_screen);
@@ -193,6 +207,8 @@ lv_obj_t* create_new_btn(lv_obj_t* parent, lv_coord_t w, lv_coord_t h, lv_align_
     lv_obj_align(new_btn, align, x_ofs, y_ofs); // Align to bottom left
     lv_obj_t *label = lv_label_create(new_btn);
     lv_obj_set_style_text_color(label, label_color, 0);
+    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
+
     lv_label_set_text(label, name);
     
 
@@ -232,7 +248,12 @@ void gestures_click_event(lv_event_t * e){
     lv_obj_t * label_current_text = lv_obj_get_child(btn, 0);
     char* current_text = lv_label_get_text(label_current_text);
 
+
     if(code == LV_EVENT_PRESSED ){
+      // lv_obj_draw_part_dsc_t * dsc = (lv_obj_draw_part_dsc_t *)lv_event_get_param(e);
+      // if (dsc->part == LV_PART_ITEMS){
+      //   dsc->rect_dsc->bg_color = HEX_RED;
+      // }
       if (!(can_play_gesture.test_and_set())){
         can_play_gesture.clear();
         lv_label_set_text(label, "Can't Play gesture right now");
@@ -321,9 +342,12 @@ int get_gest_num(){
 
 void create_controls_for_main(lv_obj_t* parent) {
 // Add the "Return" button to home tab
-    lv_obj_t* return_btn = create_new_btn(parent, 70, 40, LV_ALIGN_BOTTOM_LEFT, -10, 0, "Return", HEX_RED , HEX_WHITE);
+    lv_obj_t* return_btn = create_new_btn(parent, 70, 40, LV_ALIGN_BOTTOM_LEFT, 0, 0, "Return", HEX_RED , HEX_WHITE);
     lv_obj_add_event_cb(return_btn, return_to_main, LV_EVENT_CLICKED, NULL); // Set the event handler
+    lv_obj_set_style_text_align(return_btn, LV_TEXT_ALIGN_CENTER, 0);
 
+
+    
     lv_obj_t * label_home = lv_label_create(parent);
     lv_label_set_recolor(label_home, true);                      /*Enable re-coloring by commands in the text*/
     lv_label_set_text(label_home, "#000099 S##000066 P##00007f M##0000b2 T#");
@@ -338,6 +362,34 @@ void create_controls_for_main(lv_obj_t* parent) {
     lv_obj_set_style_text_align(label_home_more, LV_TEXT_ALIGN_LEFT, 0);
     lv_obj_align(label_home_more, LV_ALIGN_TOP_LEFT, 0, 20);
     lv_obj_set_style_text_font(label_home_more,&lv_font_montserrat_12,0);
+
+    lv_obj_t * label_home_BLE_1 = lv_label_create(parent);
+    lv_obj_t * label_home_BLE_2 = lv_label_create(parent);
+    lv_label_set_recolor(label_home_BLE_1, true);  
+    lv_label_set_recolor(label_home_BLE_2, true);        
+      
+    lv_obj_set_width(label_home_BLE_1, 75);
+    lv_obj_set_width(label_home_BLE_2, 55);
+
+    lv_label_set_text(label_home_BLE_1,  LV_SYMBOL_BLUETOOTH );
+
+    if(has_client.test_and_set()){
+        lv_label_set_text(label_home_BLE_2,  LV_SYMBOL_OK);
+        lv_obj_set_style_text_color(label_home_BLE_1, HEX_ROYAL_BLUE, 0); // Green for ON
+        lv_obj_set_style_text_color(label_home_BLE_2, lv_color_hex(0x047a04), 0); // Green for ON
+    }
+    else{
+        lv_label_set_text(label_home_BLE_2,  LV_SYMBOL_CLOSE);
+        lv_obj_set_style_text_color(label_home_BLE_2, lv_color_hex(0xc30a12), 0); // Red for OFF
+        has_client.clear();
+    }
+    
+    lv_obj_set_style_text_align(label_home_BLE_1, LV_TEXT_ALIGN_LEFT, 0);
+    lv_obj_set_style_text_align(label_home_BLE_2, LV_TEXT_ALIGN_LEFT, 0);
+    lv_obj_align(label_home_BLE_1, LV_ALIGN_TOP_LEFT, 0, 80);
+    lv_obj_align(label_home_BLE_2, LV_ALIGN_TOP_LEFT, 22, 80);
+    lv_obj_set_style_text_font(label_home_BLE_1,&lv_font_montserrat_22,0);
+    lv_obj_set_style_text_font(label_home_BLE_2,&lv_font_montserrat_22,0);
 
     int num_gest = get_gest_num();
     int num_function_total = functions.size();
@@ -368,6 +420,81 @@ void create_controls_for_main(lv_obj_t* parent) {
     lv_obj_set_style_text_font(label_gest,&lv_font_montserrat_18,0);
     // lv_obj_add_event_cb(return_btn, return_to_main, LV_EVENT_CLICKED, NULL); // Set the event handler
 }
+
+void create_controls_for_stat(lv_obj_t* parent){
+
+  // Create a title label
+  lv_obj_t* title_label = lv_label_create(parent); 
+  lv_label_set_text(title_label, "Sensors State:"); 
+  lv_obj_align(title_label, LV_ALIGN_TOP_MID, 0, 10); 
+  lv_obj_set_style_text_font(title_label, &lv_font_montserrat_18, 0); 
+
+  int y_offset = 40; // Vertical spacing between rows
+
+  // Loop through each sensor
+  for (const auto& sensor : sensors) { 
+      // Replace "_" in the name with spaces
+      String display_name = sensor.name;
+      display_name.replace("_", " ");
+      display_name[0] = toupper(display_name[0]);
+
+
+
+      // Set the style of the status label based on the sensor status
+      if (sensor.status == "on") {
+          // Create a label for the sensor name
+          lv_obj_t* sensor_name_label = lv_label_create(parent); 
+          lv_label_set_text(sensor_name_label, (display_name + ":").c_str()); 
+          lv_obj_align(sensor_name_label, LV_ALIGN_TOP_LEFT, 15, y_offset); 
+          lv_obj_set_style_text_font(sensor_name_label, &lv_font_montserrat_14, 0); 
+
+          // Create a status label
+          lv_obj_t* sensor_status_label = lv_label_create(parent); 
+          lv_obj_align(sensor_status_label, LV_ALIGN_TOP_RIGHT, -15, y_offset); 
+          lv_obj_set_style_text_font(sensor_status_label, &lv_font_montserrat_14, 0);
+          
+          lv_label_set_text(sensor_status_label, "ON " LV_SYMBOL_OK); 
+          lv_obj_set_style_text_color(sensor_status_label, lv_color_hex(0x047a04), 0); // Green for ON
+          lv_obj_set_style_text_font(sensor_status_label, &lv_font_montserrat_14, 0);  // Slightly larger font
+          y_offset += 25;
+      } 
+
+      // Update the vertical offset for the next sensor
+      
+  }
+  for (const auto& sensor : sensors){
+      String display_name = sensor.name;
+      display_name.replace("_", " ");
+      display_name[0] = toupper(display_name[0]);
+
+    if (sensor.status == "off") {
+          // Create a label for the sensor name
+          lv_obj_t* sensor_name_label = lv_label_create(parent); 
+          lv_label_set_text(sensor_name_label, (display_name + ":").c_str()); 
+          lv_obj_align(sensor_name_label, LV_ALIGN_TOP_LEFT, 15, y_offset); 
+          lv_obj_set_style_text_font(sensor_name_label, &lv_font_montserrat_14, 0); 
+
+          // Create a status label
+          lv_obj_t* sensor_status_label = lv_label_create(parent); 
+          lv_obj_align(sensor_status_label, LV_ALIGN_TOP_RIGHT, -15, y_offset); 
+          lv_obj_set_style_text_font(sensor_status_label, &lv_font_montserrat_14, 0);
+      
+          lv_label_set_text(sensor_status_label, "OFF " LV_SYMBOL_CLOSE); 
+          lv_obj_set_style_text_color(sensor_status_label, lv_color_hex(0xc30a12), 0); // Red for OFF
+          lv_obj_set_style_text_font(sensor_status_label, &lv_font_montserrat_16, 0);  // Slightly larger font
+
+          y_offset += 25;
+
+    }
+  }
+}
+
+void create_controls_for_setup(lv_obj_t* parent){
+
+}
+
+
+
 
 /*
 void create_controls_for_tab(lv_obj_t* parent, const char* btn1_text, const char* btn2_text) {
@@ -448,6 +575,7 @@ void setup()
 
     Serial.begin(115200);
 
+
     delay(1500); // milisec
 
 
@@ -456,11 +584,6 @@ void setup()
     // initial atomic flags
     can_play_gesture.test_and_set();
     // has_client.test_and_set();
-
-    // delay(500);
-
-
-    Serial.println("LVGL Tabview Demo");
 
     // Init Display
     gfx->begin(80000000);
@@ -471,28 +594,21 @@ void setup()
     ledcAttachPin(TFT_BL, 0);
     ledcWrite(0, 255); // Screen brightness can be modified by adjusting this parameter.1 (0-255)
     #endif
-    gfx->fillScreen(BLACK);
+    // gfx->fillScreen(BLACK);
 
     lv_init();
     touch_init();
 
 
-
     screenWidth = gfx->width();
     screenHeight = gfx->height();
-    //Serial.printf("Free heap: %d bytes\n", ESP.getFreeHeap());
-    //Serial.printf("Minimum free heap: %d bytes\n", ESP.getMinFreeHeap());
-    //Serial.printf("Total heap size: %d bytes\n", ESP.getHeapSize());
-    //Serial.printf("Maximum allocatable heap: %d bytes\n", ESP.getMaxAllocHeap());
-    // Allocate memory for the drawing buffer
+
     #ifdef ESP32
     disp_draw_buf = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * screenWidth * screenHeight/2, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
     #else
     disp_draw_buf = (lv_color_t *)malloc(sizeof(lv_color_t) * screenWidth * screenHeight/2);
     #endif
-    //Serial.printf("The malloc size is ");
-    //Serial.println(sizeof(lv_color_t) * screenWidth * screenHeight/2);
-  
+   
     if (!disp_draw_buf) {
       Serial.println("LVGL disp_draw_buf allocate failed!");
       return;
@@ -515,7 +631,7 @@ void setup()
     lv_indev_drv_register(&indev_drv);
 
 
-    init_default_yaml();
+
 
     
     // Initial setup screen for setting is_user
@@ -529,6 +645,23 @@ void setup()
 }
 
 
+void read_yaml_from_prot_screen_function(){
+    read_yaml_from_prot_screen = lv_obj_create(NULL);
+    // lv_scr_load(read_yaml_from_prot_screen);
+
+    lv_obj_set_style_bg_color(read_yaml_from_prot_screen, HEX_WHITE, 0); // Pink background
+
+    lv_obj_t * label1 = lv_label_create(read_yaml_from_prot_screen);
+    lv_label_set_recolor(label1, true);                      /*Enable re-coloring by commands in the text*/
+    lv_label_set_text(label1, "#00007f Reading YAML File. \n Please Wait... #");
+    lv_obj_set_style_text_align(label1, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(label1, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_text_font(label1,&lv_font_montserrat_28,0);
+
+
+    lv_obj_add_event_cb(read_yaml_from_prot_screen, load_yaml_step, LV_EVENT_CLICKED    , NULL);
+  
+} 
 
 void setupWelcomeScreen() {
     welcome_screen = lv_obj_create(NULL);
@@ -559,13 +692,154 @@ void setupWelcomeScreen() {
     lv_obj_add_event_cb(welcome_screen, changeToMainScreen, LV_EVENT_LONG_PRESSED , NULL);
 }
 
+void load_yaml_step(lv_event_t* e){
+  if(has_client.test_and_set()){
+      if ( send_yaml_request ) {
+        SendNotiyToClient("Please send YAML data", YAML_REQ, pCharacteristic);
+        Serial.println("Sent yaml request");
+        send_yaml_request = false;
+      }
+        // delay(5000);
+      if (is_yml_sensors_ready){
+          sensors.clear(); // making sure to clear demo yaml data before replacong it with real data
+          Serial.printf("sensors are ready\n");
+          splitSensorsField((char*)*pointer_to_sensor_buff);
+          is_yml_sensors_ready = false;
+          free(*pointer_to_sensor_buff);
+          Serial.printf("done parsing and storing sensors\n");
+      }
+
+      if (is_yml_motors_ready){
+        motors.clear(); // making sure to clear demo yaml data before replacong it with real data
+        Serial.printf("motors are ready\n");
+        splitMotorsField((char*)*pointer_to_motors_buff);
+        is_yml_motors_ready = false;
+        free(*pointer_to_motors_buff);
+        Serial.printf("done parsing and storing motors\n");
+
+      }
+
+      if (is_yml_functions_ready){
+        functions.clear(); // making sure to clear demo yaml data before replacong it with real data
+        Serial.printf("functions are ready\n");
+        splitFunctionsField((char*)*pointer_to_func_buff);
+        is_yml_functions_ready = false;
+        free(*pointer_to_func_buff);
+        Serial.printf("done parsing and storing functions\n");
+
+      }
+
+      if (is_yml_general_ready){
+        generalEntries.clear(); // making sure to clear demo yaml data before replacong it with real data
+        Serial.printf("passwords are ready\n");
+        splitGeneralField((char*)*pointer_to_general_buff);
+        is_yml_general_ready = false;
+        free(*pointer_to_general_buff);
+        Serial.printf("done parsing and storing passwords, changing users passwords\n");
+        yaml_structs_ready=true;
+      }
+
+      if(yaml_structs_ready){
+        setupInitialUserScreen();
+      }
+      
+      else{
+        delay(100);
+        Serial.print("ops...");
+        load_yaml_step(e);
+      }
+  }
+  else{
+    has_client.clear();
+    searchClientBLEScreen();
+  }
+}
+
+
+
 
 
 void changeToMainScreen(lv_event_t * e) {
     // delay(10000);
+    welcome_screen_flag = false;
     if(has_client.test_and_set()){
-        setupInitialUserScreen(); // Switch to the main screen
-    } 
+      Serial.printf("1");
+      read_yaml_from_prot_screen_function();
+      Serial.printf("2");
+      lv_scr_load(read_yaml_from_prot_screen);
+      Serial.printf("3");
+      // delay(200);
+      // if(send_yaml_request){
+      //   lv_event_send(read_yaml_from_prot_screen, LV_EVENT_CLICKED , NULL);
+
+      // }
+
+
+      // if ( send_yaml_request ) {
+      //   SendNotiyToClient("Please send YAML data", YAML_REQ, pCharacteristic);
+      //   Serial.println("Sent yaml request");
+      //   send_yaml_request = false;
+      // }
+      //   // delay(5000);
+      // if (is_yml_sensors_ready.test_and_set()){
+      //     sensors.clear(); // making sure to clear demo yaml data before replacong it with real data
+      //     Serial.printf("sensors are ready\n");
+      //     splitSensorsField((char*)*pointer_to_sensor_buff);
+      //     is_yml_sensors_ready.clear();
+      //     free(*pointer_to_sensor_buff);
+      //     Serial.printf("done parsing and storing sensors\n");
+      // }
+
+      // if (is_yml_motors_ready){
+      //   motors.clear(); // making sure to clear demo yaml data before replacong it with real data
+      //   Serial.printf("motors are ready\n");
+      //   splitMotorsField((char*)*pointer_to_motors_buff);
+      //   is_yml_motors_ready = false;
+      //   free(*pointer_to_motors_buff);
+      //   Serial.printf("done parsing and storing motors\n");
+
+      // }
+
+      // if (is_yml_functions_ready){
+      //   functions.clear(); // making sure to clear demo yaml data before replacong it with real data
+      //   Serial.printf("functions are ready\n");
+      //   splitFunctionsField((char*)*pointer_to_func_buff);
+      //   is_yml_functions_ready = false;
+      //   free(*pointer_to_func_buff);
+      //   Serial.printf("done parsing and storing functions\n");
+
+      // }
+
+      // if (is_yml_general_ready){
+      //   generalEntries.clear(); // making sure to clear demo yaml data before replacong it with real data
+      //   Serial.printf("passwords are ready\n");
+      //   splitGeneralField((char*)*pointer_to_general_buff);
+      //   is_yml_general_ready = false;
+      //   free(*pointer_to_general_buff);
+      //   Serial.printf("done parsing and storing passwords, changing users passwords\n");
+      //   yaml_structs_ready=true;
+      // }
+
+      // if(yaml_structs_ready){
+      //   setupInitialUserScreen();
+      // }
+      
+      // else{
+      //   is_yml_sensors_ready.clear();
+      //   delay(1000);
+      //   changeToMainScreen(e);
+      // }
+
+      // while (!yaml_structs_ready) {
+      //     delay(5000);
+
+      // }
+      // setupInitialUserScreen(); // Switch to the main screen
+    }
+
+
+
+     
     else {
       has_client.clear();
       searchClientBLEScreen();
@@ -580,14 +854,25 @@ void set_searching(lv_event_t * e){
 }
 
 void search_ble_again_event(lv_event_t * e){
-    delay(3500);
+    delay(2500);
     changeToMainScreen(e);
+    // delay(2000);
+    if(send_yaml_request){
+      lv_event_send(read_yaml_from_prot_screen, LV_EVENT_CLICKED , NULL);
+    }
 }
 
 void start_demo_event(lv_event_t * e){
   // TODO: load the deafult YAML DEMO
   is_demo_yaml.test_and_set();
-  // init_default_yaml();
+  sensors.clear();
+  motors.clear();
+  functions.clear();
+  communications.clear();
+  generalEntries.clear();
+  fileType.clear();
+
+  init_default_yaml();
   setupInitialUserScreen();
 }
 
@@ -696,11 +981,14 @@ void setupMainUI() {
     lv_scr_load(mainUI_screen);
 
     tabview = lv_tabview_create(lv_scr_act(), LV_DIR_TOP, 30);
+    lv_obj_set_style_bg_color(tabview,HEX_LIGHT_GRAY,0);
+
+    
 
     // Add tabs
-    lv_obj_t* home_tab = lv_tabview_add_tab(tabview, "Home");
-    lv_obj_t* stat_tab = lv_tabview_add_tab(tabview, "Stat");
-    lv_obj_t* setup_tab = lv_tabview_add_tab(tabview, "Setup");
+    home_tab = lv_tabview_add_tab(tabview, "Home");
+    stat_tab = lv_tabview_add_tab(tabview, "Stat");
+    setup_tab = lv_tabview_add_tab(tabview, "Setup");
     //            is_user = false;            is_tech = true;
     if (!is_user) {
       lv_obj_t* tech_tab = lv_tabview_add_tab(tabview, "Tech");
@@ -709,11 +997,18 @@ void setupMainUI() {
         lv_obj_t* debug_tab = lv_tabview_add_tab(tabview, "Bug");
     }
 
+    // lv_obj_add_event_cb(home_tab, [](lv_event_t* e) {
+    //       create_controls_for_main(home_tab);
+    // }, LV_EVENT_REFRESH, NULL);
+
+
     // Create controls for both tabs
     //create_controls_for_tab(home_tab, "home_tab Btn1", "home_tab Btn2");
     //create_controls_for_tab(tab2, "Tab2 Btn1", "Tab2 Btn2");
     create_controls_for_main(home_tab);
 
+    create_controls_for_stat(stat_tab);
+    // create_controls_for_setup(setup_tab);
 
     
 }
@@ -727,17 +1022,17 @@ void return_to_main(lv_event_t *e) {
       Serial.println("Return Button was pressed");
       is_tech = false;
       is_user = false;
-      return_BLE();
+      // return_BLE();
 
 
-      delay(100);
+      // delay(100);
 
-      if (!confirmationReceived) {
-        //Serial.println("NO");
-      }
-      else {
-        Serial.println("YES");
-      }
+      // if (!confirmationReceived) {
+      //   //Serial.println("NO");
+      // }
+      // else {
+      //   Serial.println("YES");
+      // }
 
       lv_scr_load(initial_user_screen); // Return to the main screen
 
@@ -751,12 +1046,41 @@ void loop(){
   lv_timer_handler(); /* let the GUI do its work */
   delay(5);
   // Flags for YAML parsing
-  if (is_yml_sensors_ready){
-    Serial.printf("sensors are ready\n");
-    parseYAML(SENSORS_FIELD, (char*)*pointer_to_sensor_buff);
-    is_yml_sensors_ready = false;
-    free(*pointer_to_sensor_buff);
-  }
+  // if (is_yml_sensors_ready.test_and_set()){
+  //     sensors.clear(); // making sure to clear demo yaml data before replacong it with real data
+  //     Serial.printf("sensors are ready\n");
+  //     splitSensorsField((char*)*pointer_to_sensor_buff);
+  //     is_yml_sensors_ready.clear();
+  //     free(*pointer_to_sensor_buff);
+  //     Serial.printf("done parsing and storing sensors\n");
 
+  // }
+  // if (is_yml_motors_ready){
+  //   motors.clear(); // making sure to clear demo yaml data before replacong it with real data
+  //   Serial.printf("motors are ready\n");
+  //   splitMotorsField((char*)*pointer_to_motors_buff);
+  //   is_yml_motors_ready = false;
+  //   free(*pointer_to_motors_buff);
+  //   Serial.printf("done parsing and storing motors\n");
+
+  // }
+  // if (is_yml_functions_ready){
+  //   functions.clear(); // making sure to clear demo yaml data before replacong it with real data
+  //   Serial.printf("functions are ready\n");
+  //   splitFunctionsField((char*)*pointer_to_func_buff);
+  //   is_yml_functions_ready = false;
+  //   free(*pointer_to_func_buff);
+  //   Serial.printf("done parsing and storing functions\n");
+
+  // }
+  // if (is_yml_general_ready){
+  //   generalEntries.clear(); // making sure to clear demo yaml data before replacong it with real data
+  //   Serial.printf("passwords are ready\n");
+  //   splitGeneralField((char*)*pointer_to_general_buff);
+  //   is_yml_general_ready = false;
+  //   free(*pointer_to_general_buff);
+  //   Serial.printf("done parsing and storing passwords, changing users passwords\n");
+  //   yaml_structs_ready=true;
+  // }
 }
 
