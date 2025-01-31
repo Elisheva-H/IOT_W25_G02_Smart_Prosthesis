@@ -35,8 +35,8 @@ lv_obj_t *welcome_screen  = NULL; //
 
 
 // UUIDs for the service and characteristics
-#define SERVICE_UUID        "12345678-1234-5678-1234-56789abcdef3"
-#define CHARACTERISTIC_UUID "12345678-1234-5678-1234-56789abcdef4"
+#define SERVICE_UUID        "12345678-1234-5678-1234-56789abcdef0"
+#define CHARACTERISTIC_UUID "12345678-1234-5678-1234-56789abcdef1"
 #define MSG_SIZE (sizeof(struct msg_interp))
 static NimBLEServer *pServer;
 
