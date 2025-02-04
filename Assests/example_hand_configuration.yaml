@@ -1,0 +1,110 @@
+file_type: hand_system_configuration
+
+general:
+  - name: 'Technician_code'
+    code: 2025
+  - name: 'Debug_code'
+    code: 2024
+
+communications:
+  - name: 'WiFi_server'  # string (required)
+    status: 'off'
+    ssid: 'user_HAND'   # "user" to be replaced with real name 
+    password: 'Haifa3D'
+
+  - name: 'BLE_client'  # string (required)
+    status: 'on'
+       mac: '11-11-11-11'  # just example
+    SERVICE1_UUID "6c09a8a9-be78-4596-9557-3c4bb4965058"        # example generated for W25 project
+    CHARACTERISTIC1_UUID "6c09a8a9-be78-4596-9558-3c4bb4965058"  # example generated for W25 project
+
+# inputs type options: {'BLE_input', 'Wifi_input'}
+sensors:
+  - name: 'leg_pressure_sensor' # string (required)
+    status: 'on'
+    type: 'BLE_input' # string (required)
+    function:
+      name: 'leg_function' # string (required)
+      parameters:
+        param_1: [80,20,100,true] 
+        high_thld: [90,20,100,true]
+        low_thld: [60,20,100,true]
+
+  - name: 'shoulder_sensor' # string (required)
+    status: 'off'
+    type: 'BLE_input' # string (required)
+    function:
+      name: 'shoulder_function' # string (required)
+      parameters:
+        param_1: [60,20,100,true] 
+        high_thld: [30,20,100,true]
+        low_thld: [80,20,100,true]
+
+motors:
+  - name: 'finger1_dc'    # string (required)
+    type: 'DC_motor'      # string (required)
+    pins:
+      - type: 'in1_pin'   # string (required)
+        pin_number: 19    # int (required)
+      - type: 'in2_pin'   # string (required)
+        pin_number: 21    # int (required)
+      - type: 'sense_pin' # string (required)
+        pin_number: 34    # int (required)
+    safety_threshold: [20,10,50,true]
+
+  - name: 'finger2_dc'    # string (required)
+    type: 'DC_motor'      # string (required)
+    pins:
+      - type: 'in1_pin'   # string (required)
+        pin_number: 23    # int (required)
+      - type: 'in2_pin'   # string (required)
+        pin_number: 22    # int (required)
+      - type: 'sense_pin' # string (required)
+        pin_number: 35    # int (required)
+    safety_threshold: [20,10,50,true]
+
+  - name: 'finge3_dc'     # string (required)
+    type: 'DC_motor'      # string (required)
+    pins:
+      - type: 'in1_pin'   # string (required)
+        pin_number: 4     # int (required)
+      - type: 'in2_pin'   # string (required)
+        pin_number: 16    # int (required)
+      - type: 'sense_pin' # string (required)
+        pin_number: 32    # int (required)
+    safety_threshold: [20,10,50,true]
+
+  - name: 'finge4_dc'     # string (required)
+    type: 'DC_motor'      # string (required)
+    pins:
+      - type: 'in1_pin'   # string (required)
+        pin_number: 18    # int (required)
+      - type: 'in2_pin'   # string (required)
+        pin_number: 17    # int (required)
+      - type: 'sense_pin' # string (required)
+        pin_number: 33    # int (required)
+    safety_threshold: [20,10,50,true]
+
+  - name: 'turn_dc'       # string (required)
+    type: 'DC_motor'      # string (required)
+    pins:
+      - type: 'in1_pin'   # string (required)
+        pin_number: 26    # int (required)
+      - type: 'in2_pin'   # string (required)
+        pin_number: 27    # int (required)
+      - type: 'sense_pin' # string (required)
+        pin_number: 36    # int (required)
+    safety_threshold: [20,10,50,true]
+    
+functions:
+  - name: 'rest' # string (required)
+    protocol_type: 'gesture' # string (required)
+    
+  - name: 'rock' # string (required) #Gesture function name should not go above 8 characters
+    protocol_type: 'gesture' # string (required)
+
+  - name: 'scissors' # string (required) #Gesture function name should not go above 8 characters
+    protocol_type: 'gesture' # string (required)
+ 
+  - name: 'paper' # string (required) #Gesture function name should not go above 8 characters
+    protocol_type: 'gesture' # string (required)
