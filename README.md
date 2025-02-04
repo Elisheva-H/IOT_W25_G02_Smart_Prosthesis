@@ -1,15 +1,33 @@
-## Smart Prosthesis Project by:
+## Smart Prosthesis Managment Tool Project by:
 Avigail Yampolsky, Elisheva Hammer and May Abraham
   
 ## Details about the project:
- 
+This project focuses on developing a touchscreen-based server for managing a smart prosthesis controller using an ESP32. The touchscreen interface serves as the UI, enabling users to customize prosthetic parameters, execute preprogrammed movements, adjust sensor behavior, and more. However, it does not directly control the prosthesis itself.
+
+To facilitate management, the prosthesis controller (see prosthesis mock files under ESP32 folder) sends its current system settings to the touchscreen server using YAML format. This YAML file contains all relevant data, including available sensors and motors, screen access passwords, and the functions that should be executed. When no BLE connection is available, the screen provides an option to load a mock YAML file, allowing users to add, modify, and debug different screens. An example for such YAML file can be found in the assets folder.
+
+**Manager Tool Modes**
+The manager tool operates in three distinct modes:
+
+1. Daily Mode – Designed for regular use, this mode is divided into three tabs:
+
+Home Tab: Allows users to execute preprogrammed movements.
+Status Tab: Displays the current status of all sensors.
+Setup Tab: Enables turning sensors on and off.
+
+2. Tech Mode – This mode is protected by a password defined in the YAML file. It includes all three tabs from Daily Mode and adds a Tech Tab, which provides:
+The ability to read and modify motor and sensor-related data.
+An option to manually turn motors on and off for testing.
+
+3. Debug Mode – Also password-protected (as defined in the YAML file), this mode includes all four tabs from Tech Mode and introduces a Debug Tab, which allows live plotting of sensor or motor output data for debugging purposes.
+
+
+
 ## Folder description:
 * ESP32: source code for the esp side (firmware).
 * Documentation: wiring diagram + basic operating instructions
 * Unit Tests: tests for individual hardware components (input / output devices)
-* flutter_app : dart code for our Flutter app.
 * Parameters: contains description of configurable parameters 
-* Assets: 3D printed parts, Audio files used in this project, 
 
 ## Arduino/ESP32 libraries used in this project:
 * Servo by Michael Margolis, Arduino - 1.2.2
