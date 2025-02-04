@@ -9,18 +9,24 @@ To facilitate management, the prosthesis controller (see prosthesis mock files u
 **Manager Tool Modes**
 The manager tool operates in three distinct modes:
 
-1. Daily Mode – Designed for regular use, this mode is divided into three tabs:
+1. _Daily Mode_ – Designed for regular use, this mode is divided into three tabs:
+- Home Tab: Allows users to execute preprogrammed movements.
+- Status Tab: Displays the current status of all sensors.
+- Setup Tab: Enables turning sensors on and off.
 
-Home Tab: Allows users to execute preprogrammed movements.
-Status Tab: Displays the current status of all sensors.
-Setup Tab: Enables turning sensors on and off.
+2. _Tech Mode_ – This mode is protected by a password defined in the YAML file. It includes all three tabs from Daily Mode and adds a Tech Tab, which provides:
+- The ability to read and modify motor and sensor-related data.
+- An option to manually turn motors on and off for testing.
 
-2. Tech Mode – This mode is protected by a password defined in the YAML file. It includes all three tabs from Daily Mode and adds a Tech Tab, which provides:
-The ability to read and modify motor and sensor-related data.
-An option to manually turn motors on and off for testing.
+3. _Debug Mode_ – Also password-protected (as defined in the YAML file), this mode includes all four tabs from Tech Mode and introduces a Debug Tab, which allows live plotting of sensor or motor output data for debugging purposes.
 
-3. Debug Mode – Also password-protected (as defined in the YAML file), this mode includes all four tabs from Tech Mode and introduces a Debug Tab, which allows live plotting of sensor or motor output data for debugging purposes.
+**BLE Communication**
+ _Initialization & Connection_
+•	On startup, the management controller displays a BLE connection screen and attempts to connect using the predefined UUID.
+•	The hand controller parses the YAML file and sends the parsed data to the management controller, which stores it in a structured dictionary.
+•	If reconnection is needed, a button on this screen initiates the connection process again.
 
+_Requests types_
 
 
 ## Folder description:
