@@ -4,7 +4,8 @@ Avigail Yampolsky, Elisheva Hammer and May Abraham
 ## Details about the project:
 This project focuses on developing a touchscreen-based server for managing a smart prosthesis controller using an ESP32. The touchscreen interface serves as the UI, enabling users to customize prosthetic parameters, execute preprogrammed movements, adjust sensor behavior, and more. However, it does not directly control the prosthesis itself.
 
-To facilitate management, the prosthesis controller (see prosthesis mock files under ESP32 folder) sends its current system settings to the touchscreen server using YAML format. This YAML file contains all relevant data, including available sensors and motors, screen access passwords, and the functions that should be executed. When no BLE connection is available, the screen provides an option to load a mock YAML file, allowing users to add, modify, and debug different screens. An example for such YAML file can be found in the assets folder.
+To facilitate management, the prosthesis controller (see prosthesis mock files under ESP32 folder) sends its current system settings to the touchscreen server using YAML format. This YAML file contains all relevant data, including available sensors and motors, screen access passwords, and the functions that should be executed. When no BLE connection is available, the screen provides an option to load a mock YAML file, allowing users to add, modify, and debug different screens. 
+The YAML file contains 5 major fileds: General, Communications, Sensors, Motors and Functions, an example for such YAML file can be found in the assets folder.
 
 **Manager Tool Modes**
 The manager tool operates in three distinct modes:
@@ -20,14 +21,42 @@ The manager tool operates in three distinct modes:
 
 3. _Debug Mode_ – Also password-protected (as defined in the YAML file), this mode includes all four tabs from Tech Mode and introduces a Debug Tab, which allows live plotting of sensor or motor output data for debugging purposes.
 
-**BLE Communication**
+
+_**BLE Communication**_
+
  _Initialization & Connection_
 •	On startup, the management controller displays a BLE connection screen and attempts to connect using the predefined UUID.
 •	The hand controller parses the YAML file and sends the parsed data to the management controller, which stores it in a structured dictionary.
 •	If reconnection is needed, a button on this screen initiates the connection process again.
 
-_Requests types_
+_Requests  and request types_
+All requests are transmitted as a byte array and interpreted using the following predefined structure:
 
+struct msg_interp {
+  int req_type;         // Type of request  
+  int cur_msg_count;    // Current message index in a sequence  
+  int tot_msg_count;    // Total number of messages in a sequence  
+  int msg_length;       // Length of the message data  
+  char msg[MAX_MSG_LEN]; // Message payload  
+  int checksum;         // Error-checking value  
+};
+
+Where MAX_MSG_LEN is a predefined maximum message size. If a message exceeds this limit, it will be split into multiple messages and sent sequentially.
+Additionally, when needed, each motor, sensor, and parameter is identified by its respective index in the corresponding vector.
+
+Request Types
+EMERGENCY_STOP – A special high-priority request that runs on a separate task. This request is triggered by pressing the physical BOOT button on the management controller. When activated, the management tool immediately sends a request to the prosthesis controller to halt all motors. This request remains functional as long as a BLE connection is active.
+
+CHANGE_SENSOR_STATE_REQ – Requests the prosthesis to enable or disable specific sensors. Multiple sensors and states (1 = ON, 0 = OFF) can be updated simultaneously based on user input in Daily Mode.
+
+CHANGE_SENSOR_PARAM_REQ – Requests an update to a sensor's parameter value. Multiple parameter modifications can be sent simultaneously, specifying the sensor ID, parameter ID, and desired value, based on user input in TECH Mode.
+
+CHANGE_MOTOR_PARAM_REQ – Requests a change to a motor’s safety threshold value. This request requires the motor ID and is initiated based on user input in TECH Mode.
+
+GEST_REQ – Requests the prosthesis to execute a predefined movement (gesture). The movement name is retrieved from the YAML file under the function field and categorized as a "gesture" type. The prosthesis should have a matching gesture defined under the same name.
+
+YML_SENSOR_REQ, YML_MOTORS_REQ, YML_FUNC_REQ, YML_GENERAL_REQ – These requests are sent sequentially upon establishing a connection. To accommodate larger YAML files, each YAML field is transmitted separately. Additionally, each request is sent only after the previous one has been fully processed to prevent data loss.
+  
 
 ## Folder description:
 * ESP32: source code for the esp side (firmware).
