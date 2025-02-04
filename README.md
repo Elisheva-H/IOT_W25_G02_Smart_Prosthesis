@@ -2,6 +2,7 @@
 Avigail Yampolsky, Elisheva Hammer and May Abraham
   
 ## Details about the project:
+This project aims to develop a management tool for a smart prosthetic using an ESP32 and a touchscreen interface. It provides a platform for customizing prosthetic parameters, executing preprogrammed movements, adjusting sensor behavior, and more.
  
 ## Folder description:
 * ESP32: source code for the esp side (firmware).
