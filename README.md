@@ -93,10 +93,10 @@ Additionally, when needed, each **motor, sensor, and parameter** is identified b
 ---
 
 ## Folder Description
-- **ESP32**: Source code for the ESP32 firmware.
-- **Documentation**: Wiring diagram + basic operating instructions.
+- **ESP32**: Source code for the ESP32 firmware. Contains source code for managment tool and the mock prostheis code. 
 - **Unit Tests**: Tests for individual hardware components (input/output devices).
 - **Parameters**: Contains descriptions of configurable parameters.
+- **Assets**: Contains resources and library configuration files.
 
 ---
 
