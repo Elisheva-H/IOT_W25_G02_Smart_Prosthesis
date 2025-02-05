@@ -22,10 +22,10 @@ When no BLE connection is available, the screen provides an option to load a **m
 
 The YAML file contains **five major fields**:
 - General
-- Communications
 - Sensors
 - Motors
 - Functions  
+- Communications - not required for the tool's operation.
 
 An example YAML file can be found in the **assets** folder.
 
@@ -101,13 +101,11 @@ Additionally, when needed, each **motor, sensor, and parameter** is identified b
 ---
 
 ## Arduino/ESP32 Libraries Used
-- **Servo** by Michael Margolis, Arduino - 1.2.2
 - **Adafruit BusIO** by Adafruit - 1.16.1
 - **Adafruit GFX Library** by Adafruit - 1.11.9
 - **Adafruit NeoMatrix** by Adafruit - 1.3.2
 - **Adafruit NeoPixel** by Adafruit - 1.12.3
 - **ArduinoJson** by Benoit Blanchon - 7.1.0
-- **ESP32Servo** by Kevin Harrington, John K. Bennett - 3.0.5
 - **NimBLE-Arduino** by h2zero - 1.4.2
 - **YAMLDuino** by tobozo - 1.4.2
 - **TAMC_GT911** by TAMC - 1.0.2
