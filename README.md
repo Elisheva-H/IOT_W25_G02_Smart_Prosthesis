@@ -34,14 +34,17 @@ _This project was created in collaboration with Haifa3D._
 ---
 
 ## Manager Tool Modes
+
+
+
 <p align="center">
-    <img src="https://github.com/Elisheva-H/IOT_W25_G02_Smart_Prosthesis/blob/main/opening_screen.gif" width="450" />
+    <img src="https://github.com/user-attachments/assets/01ce6054-2f77-4731-abbf-d00071be1b55" width="300" />
 </p>
 
 The manager tool operates in three distinct modes:
 
 <p align="center">
-    <img src="https://github.com/user-attachments/assets/126c853b-01d0-4720-8fe2-71e0360abe49" width="300" />
+    <img src="https://github.com/user-attachments/assets/73905bed-a963-48f4-a9b6-d2b356759ced" width="300" />
 </p>
 
 ### 1. **Daily Mode**
@@ -49,11 +52,12 @@ Designed for regular use, this mode is divided into three tabs:
 - **Home Tab**: Allows users to execute preprogrammed movements.
 - **Status Tab**: Displays the current status of all sensors.
 - **Setup Tab**: Enables turning sensors on and off.
-  
+
+
 <p align="center">
-    <img src="https://github.com/user-attachments/assets/4f9d6b1e-300f-4c94-a7e3-ccd735f24412" width="300" />
-    <img src="https://github.com/user-attachments/assets/8e1cb333-fe7f-4135-9ab5-994010cf73db" width="300" />
-    <img src="https://github.com/user-attachments/assets/c3a374d4-496a-42fe-8370-d0a732563c24" width="300" />
+    <img src="https://github.com/user-attachments/assets/7a57372c-259c-4cfd-aa3e-4f3297e30ca6" width="300" />
+    <img src="https://github.com/user-attachments/assets/f60f4d9c-9cb4-4f83-87a5-26b1855be5e0" width="300" />
+    <img src="https://github.com/user-attachments/assets/d6bf44ca-5a89-4efb-ae01-2377b729756f" width="300" />
 </p>
 
 ### 2. **Tech Mode**
@@ -61,16 +65,19 @@ This mode is password-protected (defined in the YAML file). It includes all thre
 - Reading and modifying motor and sensor-related data.
 - Manually turning motors on and off for testing.
 
+
 <p align="center">
-    <img src="https://github.com/user-attachments/assets/c5631387-82bd-491d-bbae-ddb5e8079693" width="300" />
+    <img src="https://github.com/user-attachments/assets/146894b4-ae62-49be-9a25-9c1b196dd0dd" width="300" />
+    <img src="https://github.com/user-attachments/assets/b96051f5-1fa1-4f64-8181-0b5eb90011a4" width="300" />
+       <img src="https://github.com/user-attachments/assets/a6cc9fb8-ed2c-4ceb-93b8-3c0325fff605" width="300" />
 </p>
 
 ### 3. **Debug Mode**
 Also password-protected, this mode includes all four tabs from **Tech Mode** plus a **Debug Tab**, which allows live plotting of sensor or motor output data for debugging purposes.
 
 <p align="center">
-    <img src="https://github.com/user-attachments/assets/d67ce858-80f6-480c-bb71-0c9377bab425" width="300" />
-    <img src="https://github.com/user-attachments/assets/92cd46e0-28c5-4172-a5a3-16990916cf6d" width="300" />
+    <img src="https://github.com/user-attachments/assets/70185578-0e03-4371-baad-865772bee6cf" width="300" />
+    <img src="https://github.com/user-attachments/assets/3a9b9e71-9963-4c44-81b6-c0b945ca1878" width="300" />
 </p>
 
 ---
@@ -82,8 +89,9 @@ Also password-protected, this mode includes all four tabs from **Tech Mode** plu
 - The prosthesis controller parses the **YAML file** and sends the parsed data to the **management controller**, which stores it in a structured dictionary.
 - If reconnection is needed, a button on this screen allows restarting the connection process.
 
+
 <p align="center">
-    <img src="https://github.com/user-attachments/assets/7466baf1-56f7-42ad-84a3-cca5d23511e0" width="300" />
+    <img src="https://github.com/user-attachments/assets/2a61eb70-498f-4705-9d52-9681ed4350d3" width="300" />
 </p>
 
 
