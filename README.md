@@ -139,16 +139,16 @@ Additionally, when needed, each **motor, sensor, and parameter** is identified b
 ---
 
 ## Folder Description
-- **ESP32**: Source code for the ESP32 firmware. Contains source code for managment tool and the mock prostheis code. 
+- **ESP32**: Source code for the ESP32 firmware. Contains source code for managment tool and the mock prosthesis code. 
 - **Unit Tests**: Tests for individual hardware components (input/output devices).
 - **Parameters**: Contains descriptions of configurable parameters.
-- **Assets**: Contains resources and library configuration files.
+- **Assets**: Contains resources such as yaml file and library configuration files.
 
 ---
 ## Firmware
 
-### Management Tool (ESP32-3248S032 N/R/C)
-The management tool includes the following features:
+### Management Tool (1x ESP32-3248S032 N/R/C)
+This board includes the following features:
 - USB Type-C
 - ST7789 Display
 - XPT2046 Touchscreen / GT911
@@ -159,7 +159,7 @@ The management tool includes the following features:
 - Battery Interface: JST 1.25 2p connector
 
 ### Mock Prosthesis
-Any ESP32 with BLE connectivity.
+1x Any ESP32 with BLE connectivity.
 
 ---
 ## Arduino/ESP32 Libraries Used
@@ -171,7 +171,7 @@ Any ESP32 with BLE connectivity.
 - **GFX Library for Arduino** by Moon On Our Nation - 1.2.9
 - **Touch_GT911** (Manually installed, see assetss)
 
-Project was complied using core driver **ESP32** by Espressif-2.0.17 and partition scheme "No OTA (2MB APP/2MB SPIFFS)" .
+Project was compiled using core driver **ESP32** by Espressif-2.0.17 and partition scheme "No OTA (2MB APP/2MB SPIFFS)" .
 
 ---
 
