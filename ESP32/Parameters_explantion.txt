@@ -1,0 +1,59 @@
+## This file describes all hardcoded values that are required for the project
+
+### Bluetooth-Related Parameters
+
+- SERVICE_UUID and CHARACTERISTIC_UUID: 
+  These are unique identifiers used in Bluetooth Low Energy (BLE) communication to define the service and its characteristics. 
+  - **SERVICE_UUID**: This defines the unique identifier for the service being offered by the BLE device (either the prosthesis or the management tool).
+  - **CHARACTERISTIC_UUID**: This defines the unique identifier for a specific characteristic (data or functionality) within that service.
+  It is important to note that these UUIDs must be the same for both the management tool and the prosthesis in order to ensure that they can communicate correctly over BLE.
+  If there is any mismatch between these UUIDs, the devices will not be able to recognize each other properly for communication.
+  SERVICE_UUID = "12345678-1234-5678-1234-56789abcdef0"
+  CHARACTERISTIC_UUID = "12345678-1234-5678-1234-56789abcdef1"
+
+-STACK_SIZE: The stack size for the BLE task. This task will run on Core 0, while the main task will run on Core 1.
+  STACK_SIZE = 8192
+
+- MAX_MSG_LEN: The maximum message length of the byte array that can be sent and received over BLE communication. 
+  Please note, this value only refers to the length of the `char*` array and does not include other parts of the byte array. 
+  This should be defined in both the prosthesis and management tool.
+  MAX_MSG_LEN = 128
+
+### Predefined Colors for Touch Screen
+The following colors are predefined for easier use in the touch screen interface:
+HEX_BLACK = lv_color_hex(0x000000)     // Black
+HEX_WHITE = lv_color_hex(0xffffff)     // White
+HEX_LIGHT_GRAY = lv_color_hex(0xf4f4f4) // Light Gray
+HEX_LIGHT_GRAY_2 = lv_color_hex(0xdfdfdf) // Light Gray_2
+HEX_MEDIUM_GRAY = lv_color_hex(0x808080) // Medium Gray
+HEX_DARK_GRAY = lv_color_hex(0x404040) // Dark Gray
+HEX_DARK_BLUE = lv_color_hex(0x00008b) // Dark Blue
+HEX_ROYAL_BLUE = lv_color_hex(0x4169e1) // Royal Blue
+HEX_SKY_BLUE = lv_color_hex(0x00bfff) // Sky Blue
+HEX_PINK = lv_color_hex(0xffc0cb) // Pink
+HEX_PURPLE = lv_color_hex(0x800080) // Purple
+HEX_RED = lv_color_hex(0xc30a12) // Red
+HEX_BABY_PINK = lv_color_hex(0xf4c2c2) // Baby Pink
+HEX_BURGUNDY = lv_color_hex(0x800020) // Burgundy
+HEX_GOLD = lv_color_hex(0xffd700) // Gold
+HEX_TURQUOISE = lv_color_hex(0x40e0d0) // Turquoise
+HEX_LIGHT_PURPLE = lv_color_hex(0xda70d6) // Light Purple
+HEX_MEDIUM_PURPLE = lv_color_hex(0x9370db) // Medium Purple
+HEX_DARK_PURPLE = lv_color_hex(0x663399) // Dark Purple
+HEX_YELLOW = lv_color_hex(0xf7edbe) // Banana Yellow
+HEX_GREEN = lv_color_hex(0x047a04) // Green
+
+### Emergency Button Configuration
+The following parameters are related to the emergency button:
+- buttonPin: The pin number of the emergency button.
+- lastPressTime: Stores the last press time of the button.
+- debounceDelay: Minimum time between presses (in milliseconds) to avoid stack overflow.
+
+buttonPin = 0              // Pin number for emergency button.
+lastPressTime = 0          // Last press time (in ms)
+debounceDelay = 1000       // Debounce delay (in ms)
+
+### Backlight Pins for Touch Screen
+The backlight pins on the touch screen are currently defined with default values:
+TFT_BL = 27                // Backlight pin for TFT screen
+GFX_BL = DF_GFX_BL         // Default backlight setting for graphics
