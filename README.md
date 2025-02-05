@@ -155,7 +155,6 @@ Any ESP32 with BLE connectivity.
 
 ---
 ## Arduino/ESP32 Libraries Used
-Project was complied using core driver **ESP32** by Espressif, version 2.0.17. 
 - **ArduinoJson** by Benoit Blanchon - 7.1.0
 - **NimBLE-Arduino** by h2zero - 1.4.2
 - **YAMLDuino** by tobozo - 1.4.2
@@ -163,6 +162,8 @@ Project was complied using core driver **ESP32** by Espressif, version 2.0.17.
 - **lvgl** by kisvegabor - 8.3.3
 - **GFX Library for Arduino** by Moon On Our Nation - 1.2.9
 - **Touch_GT911** (Manually installed, see assetss)
+
+Project was complied using core driver **ESP32** by Espressif-2.0.17 and partition scheme "No OTA (2MB APP/2MB SPIFFS)" .
 
 ---
 
