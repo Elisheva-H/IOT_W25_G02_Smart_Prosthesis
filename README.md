@@ -29,6 +29,8 @@ The YAML file contains **five major fields**:
 
 An example YAML file can be found in the **assets** folder.
 
+_This project was created in collaboration with Haifa3D._
+
 ---
 
 ## Manager Tool Modes
