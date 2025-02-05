@@ -32,15 +32,15 @@ An example YAML file can be found in the **assets** folder.
 ---
 
 ## Manager Tool Modes
-<div style="text-align: center;">
-    <img src="https://github.com/Elisheva-H/IOT_W25_G02_Smart_Prosthesis/blob/main/opening_screen.gif" width="450" />
-</div>
+<p align="center">
+    <img src="https://github.com/Elisheva-H/IOT_W25_G02_Smart_Prosthesis/blob/main/opening_screen.gif" width="300" />
+</p>
 
 The manager tool operates in three distinct modes:
 
-<div style="text-align: center;">
+<p align="center">
     <img src="https://github.com/user-attachments/assets/126c853b-01d0-4720-8fe2-71e0360abe49" width="300" />
-</div>
+</p>
 
 ### 1. **Daily Mode**
 Designed for regular use, this mode is divided into three tabs:
@@ -48,28 +48,28 @@ Designed for regular use, this mode is divided into three tabs:
 - **Status Tab**: Displays the current status of all sensors.
 - **Setup Tab**: Enables turning sensors on and off.
   
-<div style="text-align: center;">
+<p align="center">
     <img src="https://github.com/user-attachments/assets/4f9d6b1e-300f-4c94-a7e3-ccd735f24412" width="300" />
     <img src="https://github.com/user-attachments/assets/8e1cb333-fe7f-4135-9ab5-994010cf73db" width="300" />
     <img src="https://github.com/user-attachments/assets/c3a374d4-496a-42fe-8370-d0a732563c24" width="300" />
-</div>
+</p>
 
 ### 2. **Tech Mode**
 This mode is password-protected (defined in the YAML file). It includes all three tabs from **Daily Mode**, plus an additional **Tech Tab**, which allows:
 - Reading and modifying motor and sensor-related data.
 - Manually turning motors on and off for testing.
 
-<div style="text-align: center;">
+<p align="center">
     <img src="https://github.com/user-attachments/assets/c5631387-82bd-491d-bbae-ddb5e8079693" width="300" />
-</div>
+</p>
 
 ### 3. **Debug Mode**
 Also password-protected, this mode includes all four tabs from **Tech Mode** plus a **Debug Tab**, which allows live plotting of sensor or motor output data for debugging purposes.
 
-<div style="text-align: center;">
+<p align="center">
     <img src="https://github.com/user-attachments/assets/d67ce858-80f6-480c-bb71-0c9377bab425" width="300" />
     <img src="https://github.com/user-attachments/assets/92cd46e0-28c5-4172-a5a3-16990916cf6d" width="300" />
-</div>
+</p>
 
 ---
 
@@ -80,9 +80,9 @@ Also password-protected, this mode includes all four tabs from **Tech Mode** plu
 - The prosthesis controller parses the **YAML file** and sends the parsed data to the **management controller**, which stores it in a structured dictionary.
 - If reconnection is needed, a button on this screen allows restarting the connection process.
 
-<div style="text-align: center;">
+<p align="center">
     <img src="https://github.com/user-attachments/assets/7466baf1-56f7-42ad-84a3-cca5d23511e0" width="300" />
-</div>
+</p>
 
 
 
