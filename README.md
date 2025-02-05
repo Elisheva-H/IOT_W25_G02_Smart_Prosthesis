@@ -33,7 +33,7 @@ _This project was created in collaboration with Haifa3D._
 
 ---
 
-## Manager Tool Modes
+## Management Tool Modes
 
 
 
