@@ -57,9 +57,9 @@ Also password-protected, this mode includes all four tabs from **Tech Mode** plu
 - The prosthesis controller parses the **YAML file** and sends the parsed data to the **management controller**, which stores it in a structured dictionary.
 - If reconnection is needed, a button on this screen allows restarting the connection process.
 
----
 
-## Requests and Request Types
+
+### **Request's interpretation**
 All requests are transmitted as a **byte array** and interpreted using the following predefined structure:
 
 ```cpp
