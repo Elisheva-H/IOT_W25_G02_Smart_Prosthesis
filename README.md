@@ -113,7 +113,7 @@ Additionally, when needed, each **motor, sensor, and parameter** is identified b
 - **TAMC_GT911** by TAMC - 1.0.2
 - **lvgl** by kisvegabor - 8.3.3
 - **GFX Library for Arduino** by Moon On Our Nation - 1.2.9
-- **Touch_GT911** (Manually installed, ADD REFERENCE)
+- **Touch_GT911** (Manually installed, see assetss)
 
 ---
 
