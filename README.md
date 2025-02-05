@@ -152,12 +152,8 @@ The management tool includes the following features:
 Any ESP32 with BLE connectivity.
 
 ---
-
+Project was complied using core driver **ESP32** by Espressif, version 2.0.17. 
 ## Arduino/ESP32 Libraries Used
-- **Adafruit BusIO** by Adafruit - 1.16.1
-- **Adafruit GFX Library** by Adafruit - 1.11.9
-- **Adafruit NeoMatrix** by Adafruit - 1.3.2
-- **Adafruit NeoPixel** by Adafruit - 1.12.3
 - **ArduinoJson** by Benoit Blanchon - 7.1.0
 - **NimBLE-Arduino** by h2zero - 1.4.2
 - **YAMLDuino** by tobozo - 1.4.2
