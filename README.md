@@ -87,11 +87,20 @@ Also password-protected, this mode includes all four tabs from **Tech Mode** plu
 
 
 ### **Request's interpretation**
-All requests are transmitted as a **byte array** and interpreted using the following predefined structure:
+All requests are transmitted as a **byte array** in hexadecimal format. The byte array includes additional metadata for handling and parsing. It follows the structure below:
+
+- **First 4 bytes**: Request or response type, using predefined enums (see Request Types section). This determines how the request is processed.
+- **Bytes 5-8**: Current message number. If a message is too long to send in one part, it is split into multiple messages.
+- **Bytes 9-12**: Total number of messages expected for the request. Used to track message sequences.
+- **Bytes 13-16**: Length of the actual message payload (not the total byte array length). This represents the size of the `char*` message.
+- **Bytes 17-(MAX_MSG_LEN+17)**: The message itself, parsed as a `char*`.
+- **Last 4 bytes**: Expected checksum value for data integrity verification.
+
+The byte array is interpreted using the following predefined structure:
 
 ```cpp
 struct msg_interp {
-  int req_type;         // Type of request  
+  int req_type;         // Type of request.  
   int cur_msg_count;    // Current message index in a sequence  
   int tot_msg_count;    // Total number of messages in a sequence  
   int msg_length;       // Length of the message data  
