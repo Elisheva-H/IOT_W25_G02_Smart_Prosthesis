@@ -141,6 +141,7 @@ The management tool includes the following features:
 
 ### Mock Prosthesis
 Any ESP32 with BLE connectivity.
+
 ---
 
 ## Arduino/ESP32 Libraries Used
