@@ -34,6 +34,8 @@ An example YAML file can be found in the **assets** folder.
 ## Manager Tool Modes
 The manager tool operates in three distinct modes:
 
+<img src="https://github.com/user-attachments/assets/126c853b-01d0-4720-8fe2-71e0360abe49" width="300">
+
 ### 1. **Daily Mode**
 Designed for regular use, this mode is divided into three tabs:
 - **Home Tab**: Allows users to execute preprogrammed movements.
@@ -56,6 +58,8 @@ Also password-protected, this mode includes all four tabs from **Tech Mode** plu
 - On startup, the management controller displays a **BLE connection screen** and attempts to connect using the predefined **UUID**.
 - The prosthesis controller parses the **YAML file** and sends the parsed data to the **management controller**, which stores it in a structured dictionary.
 - If reconnection is needed, a button on this screen allows restarting the connection process.
+
+<img src="https://github.com/user-attachments/assets/7466baf1-56f7-42ad-84a3-cca5d23511e0" width="300">
 
 
 
