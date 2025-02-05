@@ -33,7 +33,7 @@ An example YAML file can be found in the **assets** folder.
 
 ## Manager Tool Modes
 <p align="center">
-    <img src="https://github.com/Elisheva-H/IOT_W25_G02_Smart_Prosthesis/blob/main/opening_screen.gif" width="300" />
+    <img src="https://github.com/Elisheva-H/IOT_W25_G02_Smart_Prosthesis/blob/main/opening_screen.gif" width="450" />
 </p>
 
 The manager tool operates in three distinct modes:
