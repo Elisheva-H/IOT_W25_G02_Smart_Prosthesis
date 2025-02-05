@@ -126,6 +126,22 @@ Additionally, when needed, each **motor, sensor, and parameter** is identified b
 - **Assets**: Contains resources and library configuration files.
 
 ---
+## Firmware
+
+### Management Tool (ESP32-3248S032 N/R/C)
+The management tool includes the following features:
+- USB Type-C
+- ST7789 Display
+- XPT2046 Touchscreen / GT911
+- TF Card Interface
+- I2C: 2 x JST1.0 4p connectors
+- Power & Serial: JST 1.25 4p connector
+- Speaker: JST 1.25 2p connector
+- Battery Interface: JST 1.25 2p connector
+
+### Mock Prosthesis
+Any ESP32 with BLE connectivity.
+---
 
 ## Arduino/ESP32 Libraries Used
 - **Adafruit BusIO** by Adafruit - 1.16.1
