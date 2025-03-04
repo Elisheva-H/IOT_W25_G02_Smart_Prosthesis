@@ -164,7 +164,7 @@ This board includes the following features:
 ---
 ## Arduino/ESP32 Libraries Used
 - **ArduinoJson** by Benoit Blanchon - 7.1.0
-- **NimBLE-Arduino** by h2zero - 1.4.2
+- **NimBLE-Arduino** by h2zero - 2.1.2
 - **YAMLDuino** by tobozo - 1.4.2
 - **TAMC_GT911** by TAMC - 1.0.2
 - **lvgl** by kisvegabor - 8.3.3
